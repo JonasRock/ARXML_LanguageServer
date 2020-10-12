@@ -6,3 +6,4 @@
 
 *.code-workspace
 build/
+docs/

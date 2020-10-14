@@ -5,35 +5,38 @@
 
 using namespace nlohmann;
 
-//Requests
-jsonrpcpp::response_ptr initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter params)
+namespace requests
 {
-    json result = {
-        "capabilities",
-        {
+    jsonrpcpp::response_ptr initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter params)
+    {
+        json result = {
+            "capabilities",
             {
-                "declarationProvider", true
+                {
+                    "declarationProvider", true
+                },
+                {
+                    "referencesProvider", true
+                }
             },
+            "serverInfo",
             {
-                "referencesProvider", true
+                {
+                    "name", "ARXML_LanguageServer"
+                },
+                {
+                    "version", "0.0.1"
+                }
             }
-        },
-        "serverInfo",
-        {
-            {
-                "name", "ARXML_LanguageServer"
-            },
-            {
-                "version", "0.0.1"
-            }
-        }
-    };
+        };
 
-    return std::make_shared<jsonrpcpp::Response>(id, result);
+        return std::make_shared<jsonrpcpp::Response>(id, result);
+    }
 }
-
-//Notifications
-void initialized(jsonrpcpp::notification_ptr notification)
+namespace notifications
 {
-    std::cout << "Received \"initialized\" notification\n";
+    void initialized(jsonrpcpp::notification_ptr notification)
+    {
+        std::cout << "Received \"initialized\" notification\n";
+    }
 }

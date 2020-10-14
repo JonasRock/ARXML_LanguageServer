@@ -14,6 +14,11 @@ using namespace boost;
 //Todo: ugly and probably unsafe
 std::size_t read_(asio::ip::tcp::socket &socket, std::vector<char> &buffer)
 {
+    while(socket.available() < 20)
+    {
+        //busy waiting
+    }
+
     //Read and throw away the first 16 byte
     std::vector<char> throwAway;
     throwAway.resize(16);

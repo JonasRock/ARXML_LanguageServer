@@ -3,61 +3,83 @@
 #include <vector>
 
 #include "boost/asio.hpp"
-#include "boost/lexical_cast.hpp"
+#include "jsonrpcpp.hpp"
 
+#include "methods.hpp"
+#include "readWrite.hpp"
 
-using namespace boost;
-
-
-//Todo: split into header and content
-size_t read_(asio::ip::tcp::socket &socket, std::vector<char> &buffer)
-{
-
-    size_t availBytes = socket.available();
-    buffer.resize(availBytes);
-
-    boost::system::error_code ec;
-    size_t readNum = asio::read(socket, asio::buffer(buffer), asio::transfer_exactly(availBytes), ec);
-
-    if(ec) { std::cerr << ec.message() << std::endl; }
-    
-    return readNum;
-}
-
-//all yeahhhh, ugly
-size_t write_(asio::ip::tcp::socket &socket, std::vector<char> &buffer)
-{
-    //We need a header in form "Content-Length: x\r\n\r\n" according to Language Server Protocol Specification
-
-    std::vector<char> headerPrefix = {'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' '};
-    std::vector<char> headerNumber = lexical_cast<std::vector<char>>(buffer.size());
-    std::vector<char> headerSuffix= {'\r','\n','\r','\n'};
-
-    size_t sentBytes = asio::write(socket, asio::buffer(headerPrefix));
-    sentBytes += asio::write(socket, asio::buffer(headerNumber));
-    sentBytes += asio::write(socket, asio::buffer(headerSuffix));
-    sentBytes += asio::write(socket, asio::buffer(buffer));
-    std::cout.write(reinterpret_cast<char*>(&headerPrefix[0]), headerPrefix.size());
-    std::cout.write(reinterpret_cast<char*>(&headerNumber[0]), headerNumber.size());
-    std::cout.write(reinterpret_cast<char*>(&headerSuffix[0]), headerSuffix.size());
-    std::cout.write(reinterpret_cast<char*>(&buffer[0]), buffer.size());
-    return sentBytes;
-}
-
-
+// void processMessage(jsonrpcpp::Parser &parser, std::string message)
+// {
+//     try
+//         {
+//             jsonrpcpp::entity_ptr entity = parser.parse(outs);
+//             if (entity)
+//             {
+//                 if(entity->is_response())
+//                 {
+//                     std::cout << "Response received:\n" << entity->to_json().dump(2) << "\n";
+//                 }
+//                 if(entity->is_request())
+//                 {
+//                     std::cout << "Request received:\n" << entity->to_json().dump(2) << "\n";
+//                     jsonrpcpp::Response response = handleRequest(std::dynamic_pointer_cast<jsonrpcpp::Request>(entity));
+//                     //TODO Send back response
+//                 }
+//                 if(entity->is_notification())
+//                 {
+//                     std::cout << "Notification received:\n" << entity->to_json().dump(2)<< "\n";
+//                     jsonrpcpp::notification_ptr notification = std::dynamic_pointer_cast<jsonrpcpp::Notification>(entity);
+//                     notification->method();
+//                 }
+//                 if(entity->is_batch())
+//                 {
+//                     //TODO batch processing
+//                 }
+//             }
+//         }
+//         catch(const jsonrpcpp::RequestException &e)
+//         {
+//             std::cerr << e.what() << "\n";
+//         }
+//         catch(const jsonrpcpp::RpcException &e)
+//         {
+//             std::cerr << e.what() << "\n";
+//         }
+//         catch(const jsonrpcpp::ParseErrorException &e)
+//         {
+//             std::cerr << e.what() << "\n";
+//         }
+//         catch(const std::exception &e)
+//         {
+//             std::cerr << e.what() << "\n";
+//         }
+//     }
+// }
 
 int main()
 {
     asio::io_service ios;
     asio::ip::tcp::endpoint endPoint(asio::ip::address::from_string("127.0.0.1"), 12730);
     asio::ip::tcp::socket socket(ios, endPoint.protocol());
-
     socket.connect(endPoint);
 
-    std::vector<char> out;
-    size_t numRead = read_(socket, out);
-    std::string outs(out.begin(), out.end());
-    std::cout << numRead << ": " << outs << std::endl;
-    write_(socket, out);
-    return 0;
+    while(1)
+    {
+        std::vector<char> out;
+        std::size_t numRead = read_(socket, out);
+        std::string outs(out.begin(), out.end());
+        std::cout << numRead << ": " << outs << std::endl;
+
+        jsonrpcpp::Parser parser;
+        parser.register_notification_callback("initialized", initialized);
+        parser.register_request_callback("initialize", initialize);
+
+        jsonrpcpp::entity_ptr response = parser.parse(outs);
+        if(response->is_response())
+        {
+            std::string responseString = std::dynamic_pointer_cast<jsonrpcpp::Response>(response)->to_json().dump();
+            std::vector<char> responseBuffer(responseString.begin(), responseString.end());
+            write_(socket, responseBuffer);
+        }
+    }
 }

@@ -1,10 +1,7 @@
 #ifndef METHODS_H
 #define METHODS_H
 
-#include "json.hpp"
 #include "jsonrpcpp.hpp"
-
-using namespace nlohmann;
 
 namespace requests
 {

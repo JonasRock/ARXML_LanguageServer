@@ -7,7 +7,7 @@ using namespace nlohmann;
 
 namespace requests
 {
-    jsonrpcpp::response_ptr initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter params)
+    jsonrpcpp::response_ptr initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
     {
         json result = {
             "capabilities",
@@ -33,9 +33,10 @@ namespace requests
         return std::make_shared<jsonrpcpp::Response>(id, result);
     }
 }
+
 namespace notifications
 {
-    void initialized(jsonrpcpp::notification_ptr notification)
+    void initialized(const jsonrpcpp::Parameter &params)
     {
         std::cout << "Received \"initialized\" notification\n";
     }

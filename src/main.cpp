@@ -1,9 +1,8 @@
 #include <iostream>
 #include <string>
-#include <vector>
 
-#include "methods.hpp"
 #include "readWrite.hpp"
+#include "methods.hpp"
 
 #include "boost/asio.hpp"
 #include "json.hpp"
@@ -14,7 +13,7 @@ void processMessage(asio::ip::tcp::socket &socket, jsonrpcpp::Parser &parser, st
 {
     try
     {
-        jsonrpcpp::entity_ptr entity = parser.parse(message);
+        jsonrpcpp::entity_ptr entity = parser.do_parse(message);
         if (entity)
         {
             //response
@@ -28,18 +27,18 @@ void processMessage(asio::ip::tcp::socket &socket, jsonrpcpp::Parser &parser, st
             {
                 std::cout << "Request received:\n" << entity->to_json().dump(2) << "\n";
                 jsonrpcpp::request_ptr request = std::dynamic_pointer_cast<jsonrpcpp::Request>(entity);
-
+                std::cout << "Requested method: " << request->method() << "\n\n";
                 //All Methods here
                 jsonrpcpp::response_ptr response;
-                if(request->method() == "initalize")
+                std::string reqMethod = request->method();
+                if(reqMethod == "initialize")
                 {
                     response = requests::initialize(request->id(), request->params());
                 }
 
-
                 std::string responseString = response->to_json().dump();
-                std::vector<char> responseBuffer(responseString.begin(), responseString.end());
-                write_(socket, responseBuffer);
+                write_(socket, responseString);
+                std::cout << "Response sent:\n" << response->to_json().dump(2);
             }
 
             //notification
@@ -89,12 +88,10 @@ int main()
 
     while(1)
     {
-        std::vector<char> out;
-        std::size_t numRead = read_(socket, out);
-        std::string outs(out.begin(), out.end());
-        std::cout << numRead << ": " << outs << std::endl;
+        std::string message;
+        std::size_t numRead = read_(socket, message);
 
         jsonrpcpp::Parser parser;
-        processMessage(socket, parser, outs);
+        processMessage(socket, parser, message);
     }
 }

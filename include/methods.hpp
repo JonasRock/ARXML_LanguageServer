@@ -5,7 +5,12 @@
 
 namespace requests
 {
-    jsonrpcpp::response_ptr initialize(const jsonrpcpp::Id &id,const jsonrpcpp::Parameter &params);
+    jsonrpcpp::response_ptr initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
+
+    namespace textDocument
+    {
+        jsonrpcpp::response_ptr hover(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
+    }
 }
 
 namespace notifications

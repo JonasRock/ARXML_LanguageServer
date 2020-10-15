@@ -29,8 +29,9 @@ void processMessage(asio::ip::tcp::socket &socket, jsonrpcpp::Parser &parser, st
                 jsonrpcpp::request_ptr request = std::dynamic_pointer_cast<jsonrpcpp::Request>(entity);
                 std::cout << "Requested method: " << request->method() << "\n\n";
                 //All Methods here
-                jsonrpcpp::response_ptr response;
+                jsonrpcpp::response_ptr response = nullptr;
                 std::string reqMethod = request->method();
+                
                 if(reqMethod == "initialize")
                 {
                     response = requests::initialize(request->id(), request->params());
@@ -38,7 +39,7 @@ void processMessage(asio::ip::tcp::socket &socket, jsonrpcpp::Parser &parser, st
 
                 std::string responseString = response->to_json().dump();
                 write_(socket, responseString);
-                std::cout << "Response sent:\n" << response->to_json().dump(2);
+                std::cout << "Response sent:\n" << response->to_json().dump(2) << "\n\n";
             }
 
             //notification
@@ -86,12 +87,23 @@ int main()
     asio::ip::tcp::socket socket(ios, endPoint.protocol());
     socket.connect(endPoint);
 
+        jsonrpcpp::Parser parser;
+    parser.register_notification_callback("initialized", notifications::initialized);
+    parser.register_request_callback("initialize", requests::initialize);
+    parser.register_request_callback("textDocument/hover", requests::textDocument::hover);
+
     while(1)
     {
         std::string message;
         std::size_t numRead = read_(socket, message);
+        std::cout << "Receiving Message:\n" << message << "\n\n";
 
-        jsonrpcpp::Parser parser;
-        processMessage(socket, parser, message);
+        jsonrpcpp::entity_ptr ret = parser.parse(message);
+        if (ret->is_response())
+        {
+            std::string responseMessage = std::dynamic_pointer_cast<jsonrpcpp::Response>(ret)->to_json().dump();
+            write_(socket, responseMessage);
+            std::cout << "Sending Message:\n" << responseMessage << "\n\n";
+        }
     }
 }

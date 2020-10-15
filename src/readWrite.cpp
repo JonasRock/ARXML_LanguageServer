@@ -24,7 +24,7 @@ std::size_t read_(asio::ip::tcp::socket &socket, std::string &message)
     if (ec) { std::cerr << ec.message() << std::endl; }
 
     size_t contentLength = lexical_cast<size_t>(std::string{
-        // Remove the "Content-Lenght: "
+        // Remove the "Content-Length: "
         asio::buffers_begin(headerbuf.data()) + 16,
         // Remove the "\r\n\r\n"
         asio::buffers_begin(headerbuf.data()) + headerLength - 4
@@ -66,7 +66,7 @@ std::size_t write_(asio::ip::tcp::socket &socket, const std::string &message)
     asio::streambuf sendBuf;
     std::ostream sendStream(&sendBuf);
 
-    sendStream << "Content-Lenght: ";
+    sendStream << "Content-Length: ";
     sendStream << lexical_cast<std::string>(message.length());
     sendStream << "\r\n\r\n";
     sendStream << message;

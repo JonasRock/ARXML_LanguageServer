@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(GCC_COVERAGE_COMPILE_FLAGS "-fdiagnostics-color")
 
-add_executable(ARXML_LanguageServer src/main.cpp src/methods.cpp src/readWrite.cpp)
+add_executable(ARXML_LanguageServer src/main.cpp src/methods.cpp src/readWrite.cpp src/configurationGlobals.cpp)
 
 add_subdirectory(src)
 add_subdirectory(include)

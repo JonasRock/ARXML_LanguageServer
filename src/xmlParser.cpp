@@ -2,32 +2,66 @@
 #include <iostream>
 #include "boost/iostreams/device/mapped_file.hpp"
 #include <chrono>
+#include <utility>
 
 using namespace boost;
 
+struct shortnamePosition
+{
+    std::string shortname;
+    std::size_t lineNr;
+    std::size_t charNrStart;
+};
+
 void readFile()
 {
+    auto t0 = std::chrono::high_resolution_clock::now();
+
     iostreams::mapped_file mmap("C:\\Users\\jr83522\\Desktop\\BMS48V.arxml", boost::iostreams::mapped_file::readonly);
     const char* begin = mmap.const_data();
-    const char* end = begin + mmap.size();
-    const char* temp = begin;
-    std::vector<std::string> shortnames;
-    int numLines = 0;
+    const char* const end = begin + mmap.size();
+    std::vector<shortnamePosition> shortnames;
+    int numLines = 5;
 
-    auto t0 = std::chrono::high_resolution_clock::now();
-    //ca. 100 000/140 000 Shortnames pro Sekunde -> ca. 5 - 8 Sekunden für 1 GB
+    //VLT Besser?
+    // ~5-8ms for a 2 mb file with 27000 lines -< 2.5 to 4 seconds for a 1gb file //in release mode
     while (begin && begin < end)
     {
-        if (begin = static_cast<const char*>(strstr(begin, "<SHORT-NAME>")))
+        if(begin = static_cast<const char*>(memchr(begin, '<', end - begin)))
         {
-            begin += 12;
-            temp = strstr(begin, "</SHORT-NAME>");
-            shortnames.push_back(std::string(begin, static_cast<size_t>(temp-begin)));
+            if(!strncmp(begin + 1, "SHORT-NAME>", 11))
+            {
+                //Check how many spaces were before we found the '<' for the tree calculation
+                //Found a tag, check if its a "<SHORT-NAME>""
+                int numSpaces = 0;
+                while(*(begin - numSpaces - 1)== ' ')
+                {
+                    numSpaces += 1;
+                }
+                begin += 12; //We already compared with "SHORT-NAME>, we can skip ahead that much"
+                
+                const char* endChar = static_cast<const char*>(memchr(begin, '<', end - begin)); //Find the closing tag
+
+                shortnamePosition temp;
+                temp.lineNr = numLines;
+                temp.charNrStart = numSpaces + 12;
+                temp.shortname = std::string(begin, static_cast<size_t>(endChar-begin));
+                shortnames.push_back(temp);
+
+                //We can skip the next twelve chars, they are "/SHORT-NAME>""
+                begin = endChar + 12;
+            }
             numLines++;
-            begin += 13;
+            begin = static_cast<const char*>(memchr(begin, '\n', end - begin));
+
+            if(begin) // Else it would be an error
+            {
+                begin++;
+            }
         }
     }
+        
     auto t1 = std::chrono::high_resolution_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count() << " us: ";
-    std::cout << numLines << " SHORT-NAMES found\n";
+    std::cout << numLines << " Lines parsed\n";
 }

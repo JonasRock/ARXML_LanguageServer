@@ -8,8 +8,11 @@
 #include "readWrite.hpp"
 #include "methods.hpp"
 
+void readFile();
+
 int main()
 {
+    readFile();
     asio::io_service ios;
     asio::ip::tcp::endpoint endPoint(asio::ip::address::from_string("127.0.0.1"), 12730);
     asio::ip::tcp::socket socket(ios, endPoint.protocol());

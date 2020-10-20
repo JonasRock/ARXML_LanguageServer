@@ -10,20 +10,31 @@
 
 void readFile();
 
+//TODO: parseNewlines
+//TODO: toCharOffset, fromCharOffset
+//TODO: parseReferences - maybe add the positions as a array to the tree
+//      the shortnames are sorted in the propertytree, so we can use this info to find
+//          the shortname for a given position relatively quickly
+
 int main()
 {
+    //init
     readFile();
     asio::io_service ios;
     asio::ip::tcp::endpoint endPoint(asio::ip::address::from_string("127.0.0.1"), 12730);
     asio::ip::tcp::socket socket(ios, endPoint.protocol());
     socket.connect(endPoint);
 
+
     jsonrpcpp::Parser parser;
+
+    //Register the callbacks for the LPS messages
     parser.register_notification_callback("initialized", notifications::initialized);
     parser.register_notification_callback("exit", notifications::exit);
     parser.register_request_callback("initialize", requests::initialize);
     parser.register_request_callback("textDocument/hover", requests::textDocument::hover);
     parser.register_request_callback("shutdown", requests::shutdown);
+
 
     while(1)
     {

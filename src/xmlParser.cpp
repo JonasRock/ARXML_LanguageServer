@@ -1,67 +1,119 @@
 #include <string>
 #include <iostream>
 #include "boost/iostreams/device/mapped_file.hpp"
+#include "boost/property_tree/ptree.hpp"
 #include <chrono>
 #include <utility>
+#include <stack>
 
 using namespace boost;
 
-struct shortnamePosition
-{
-    std::string shortname;
-    std::size_t lineNr;
-    std::size_t charNrStart;
-};
-
 void readFile()
 {
+    //For debugging
     auto t0 = std::chrono::high_resolution_clock::now();
 
     iostreams::mapped_file mmap("C:\\Users\\jr83522\\Desktop\\BMS48V.arxml", boost::iostreams::mapped_file::readonly);
-    const char* begin = mmap.const_data();
+    const char* start = mmap.const_data();
+    const char* begin = start;
     const char* const end = begin + mmap.size();
-    std::vector<shortnamePosition> shortnames;
-    int numLines = 5;
 
-    //VLT Besser?
-    // ~5-8ms for a 2 mb file with 27000 lines -< 2.5 to 4 seconds for a 1gb file //in release mode
-    while (begin && begin < end)
+    int depth = 0;
+
+    //This tree contains the shortname path structure,
+    //with the shortnames as keys and character offsets as values
+    property_tree::basic_ptree<std::string, std::size_t> shortnameTree;
+
+    //The depths vector holds the depth and associated shortnames, so we can 
+    //decide where in the tree to add the newest shortname when found
+    std::vector<std::pair<std::size_t, std::string>> depths;
+
+    while( begin && begin < end)
     {
-        if(begin = static_cast<const char*>(memchr(begin, '<', end - begin)))
+        
+
+        //Go to the beginning of the next tag
+        begin = static_cast<const char*>(memchr(begin, '<', end - begin));
+        ++begin;
+        //Check the tag
+
+        //Closing tag
+        if ( *(begin) == '/' )
         {
-            if(!strncmp(begin + 1, "SHORT-NAME>", 11))
+            --depth;
+            //Skip to the end
+            begin = static_cast<const char*>(memchr(++begin, '>', end - begin)) + 1;
+        }
+
+        //Shortname
+        else if ( !strncmp(begin, "SHORT-NAME>", 11) )
+        {
+            //Skip to the end
+            begin += 11;
+
+            const char* endChar = static_cast<const char*>(memchr(begin, '<', end - begin)); //Find the closing tag
+
+            std::string shortnameString(begin, static_cast<std::size_t>(endChar-begin));
+            std::size_t charOffset = static_cast<std::size_t>(begin - start);
+
+            //add the found shortname to the tree, according to the depths of the other components
+            if(!depths.empty())
             {
-                //Check how many spaces were before we found the '<' for the tree calculation
-                //Found a tag, check if its a "<SHORT-NAME>""
-                int numSpaces = 0;
-                while(*(begin - numSpaces - 1)== ' ')
+                while ( depths.back().first >= depth )
                 {
-                    numSpaces += 1;
+                    depths.pop_back();
+                    if(depths.empty())
+                    {
+                        break;
+                    }
                 }
-                begin += 12; //We already compared with "SHORT-NAME>, we can skip ahead that much"
-                
-                const char* endChar = static_cast<const char*>(memchr(begin, '<', end - begin)); //Find the closing tag
-
-                shortnamePosition temp;
-                temp.lineNr = numLines;
-                temp.charNrStart = numSpaces + 12;
-                temp.shortname = std::string(begin, static_cast<size_t>(endChar-begin));
-                shortnames.push_back(temp);
-
-                //We can skip the next twelve chars, they are "/SHORT-NAME>""
-                begin = endChar + 12;
             }
-            numLines++;
-            begin = static_cast<const char*>(memchr(begin, '\n', end - begin));
+            depths.push_back(std::make_pair(depth, shortnameString));
 
-            if(begin) // Else it would be an error
+            std::string pathString = "";
+            for(auto i: depths)
             {
-                begin++;
+                pathString += i.second + ".";
             }
+            //remove the last '.'
+            pathString.pop_back();
+
+            shortnameTree.add( pathString, charOffset );
+
+            begin = endChar + 13;
+        }
+
+        //XML Comment
+        else if ( *(begin) == '!' )
+        {
+            //Skip to the end
+            begin = strstr(++begin, "-->") + 3;
+        }
+
+        //XML Info
+        else if( *(begin) == '?' )
+        {
+            //Skip to the end
+            begin = strstr(++begin, "?>") + 2;
+        }
+
+        //Normal XML Element
+        else
+        {
+            //Skip to the end
+            begin = static_cast<const char*>(memchr(begin, '>', end - begin)) + 1;
+
+            //Check for empty elements that don't increase the depth
+            if ( *(begin - 1) != '/' )
+            {
+                depth++;
+            };
         }
     }
-        
+
+    //For debugging
     auto t1 = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count() << " us: ";
-    std::cout << numLines << " Lines parsed\n";
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count() << " ms\n";
+    
+    std::cout << "Tree Size: " << shortnameTree.size() << " Main Elements.\n";
 }

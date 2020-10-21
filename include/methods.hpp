@@ -11,6 +11,7 @@ namespace requests
     namespace textDocument
     {
         jsonrpcpp::response_ptr hover(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
+        jsonrpcpp::response_ptr definition(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     }
 }
 

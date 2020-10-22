@@ -4,20 +4,29 @@
 #include <utility>
 #include <algorithm>
 #include <cstdint>
-#include "boost/property_tree/ptree.hpp"
+
 #include "boost/iostreams/device/mapped_file.hpp"
+
 #include "xmlParser.hpp"
+#include "shortnameStorage.hpp"
 
 using namespace boost;
 
-xmlParser::xmlParser(std::string filepath)
+xmlParser::xmlParser(std::string pathname)
 {
-    mmap = iostreams::mapped_file(filepath, boost::iostreams::mapped_file::readonly);
+    iostreams::mapped_file mmap(pathname, iostreams::mapped_file::readonly);
 }
 
 xmlParser::~xmlParser()
 {
     mmap.close();
+}
+
+void xmlParser::parse()
+{
+    parseNewlines();
+    parseShortnames();
+    parseReferences();
 }
 
 void xmlParser::parseShortnames()
@@ -72,8 +81,9 @@ void xmlParser::parseShortnames()
 
             const char* endChar = static_cast<const char*>(memchr(begin, '<', end - begin)); //Find the closing tag
             std::string shortnameString(begin, static_cast<uint32_t>(endChar-begin));
-            shortnameProps props;
-            props.offset = static_cast<uint32_t>(begin - start);
+            shortnameElement element;
+            element.name = shortnameString;
+            element.fileOffset = end - begin;
 
             //add the found shortname to the tree, according to the depths of the other components
             depths.push_back(std::make_pair(depth, shortnameString));
@@ -81,12 +91,12 @@ void xmlParser::parseShortnames()
             std::string pathString = "";
             for(auto i: depths)
             {
-                pathString += i.second + ".";
+                pathString += i.second + "/";
             }
-            //remove the last '.'
+            //remove the last '/'
             pathString.pop_back();
-
-            shortnameTree.add( pathString, props );
+            element.path = pathString;
+            storage.add(element);
 
             begin = endChar + 13;
         }
@@ -118,8 +128,6 @@ void xmlParser::parseShortnames()
             };
         }
     }
-
-    //For debugging
 }
 
 void xmlParser::parseNewlines()
@@ -184,16 +192,16 @@ void xmlParser::parseReferences()
     }
 }
 
-position xmlParser::getPositionFromOffset(uint32_t offset)
+lsp::Position xmlParser::getPositionFromOffset(uint32_t offset)
 {
-    position ret;
+    lsp::Position ret;
     uint32_t index = std::lower_bound(newLineOffsets.begin(), newLineOffsets.end(), offset) - newLineOffsets.begin();
-    ret.lineNr = index;
-    ret.charPos = offset - newLineOffsets[index];
+    ret.line = index;
+    ret.character = offset - newLineOffsets[index];
     return ret;
 }
 
-uint32_t xmlParser::getOffsetFromPosition(position pos)
+uint32_t xmlParser::getOffsetFromPosition(lsp::Position pos)
 {
-    return newLineOffsets[pos.lineNr] + pos.charPos;
+    return newLineOffsets[pos.line] + pos.character;
 }

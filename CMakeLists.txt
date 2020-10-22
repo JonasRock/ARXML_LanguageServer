@@ -12,6 +12,7 @@ add_executable(ARXML_LanguageServer
   src/methods.cpp
   src/readWrite.cpp
   src/configurationGlobals.cpp
+  src/shortnameStorage.cpp
   c:/boost/libs/iostreams/src/mapped_file.cpp
 )
 

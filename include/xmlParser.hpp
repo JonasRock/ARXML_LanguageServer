@@ -5,36 +5,37 @@
 #include <cstdint>
 
 #include "boost/iostreams/device/mapped_file.hpp"
-#include "boost/property_tree/ptree.hpp"
 
 #include "types.hpp"
+#include "shortnameStorage.hpp"
 
 using namespace boost;
-
-struct shortnameProps
-{
-    uint32_t offset;
-    std::vector<std::pair<std::uint32_t, std::uint32_t>> referenceOffsetRange;
-};
 
 class xmlParser
 {
 public:
-    void parseShortnames();
-    void parseReferences();
-    void parseNewlines();
-    position getPositionFromOffset(uint32_t offset);
-    uint32_t getOffsetFromPosition(position pos);
     xmlParser(std::string filepath);
     ~xmlParser();
 
+    void parse();
+    lsp::LocationLink getDefinition(lsp::TextDocumentPositionParams posParams);
+    std::vector<lsp::LocationLink> getReferences(lsp::TextDocumentPositionParams posParams);
+
+    lsp::Position getPositionFromOffset(uint32_t offset);
+    uint32_t getOffsetFromPosition(lsp::Position pos);
+
 private:
+    void parseShortnames();
+    void parseReferences();
+    void parseNewlines();
+
+    iostreams::mapped_file mmap;
+
     //This tree contains the shortname path structure,
     //with the shortnames as keys and character offsets as values
-    property_tree::basic_ptree<std::string, shortnameProps> shortnameTree;
+    shortnameStorage storage;
 
     std::vector<uint32_t> newLineOffsets;
-    iostreams::mapped_file mmap;
 };
 
 #endif /* XMLPARSER_H */

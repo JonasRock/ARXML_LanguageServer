@@ -22,23 +22,11 @@ int main()
 
     auto t0 = std::chrono::high_resolution_clock::now();
     auto xparse5 = new xmlParser("C:/Users/jr83522/Desktop/E3_1_2_Premium_V12.04.20A_AR430_20201011_HCP4_uC1_1_BP.arxml");
+    xparse5->parse();
     auto t1 = std::chrono::high_resolution_clock::now();
-    auto t2 = std::chrono::high_resolution_clock::now();
-    (*xparse5).parseShortnames();
-    auto t3 = std::chrono::high_resolution_clock::now();
-    auto t4 = std::chrono::high_resolution_clock::now();
-    (*xparse5).parseReferences();
-    auto t5 = std::chrono::high_resolution_clock::now();
-    auto t6 = std::chrono::high_resolution_clock::now();
-    (*xparse5).parseNewlines();
-    auto t7 = std::chrono::high_resolution_clock::now();
     delete xparse5;
 
     std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() << "ms\n";
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << "ms\n";
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t5-t4).count() << "ms\n";
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t7-t6).count() << "ms\n";
-
     //init
     asio::io_service ios;
     asio::ip::tcp::endpoint endPoint(asio::ip::address::from_string("127.0.0.1"), 12730);

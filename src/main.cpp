@@ -8,6 +8,7 @@
 #include "readWrite.hpp"
 #include "methods.hpp"
 #include "xmlParser.hpp"
+#include "configurationGlobals.h"
 
 //TODO: parseNewlines
 //TODO: toCharOffset, fromCharOffset
@@ -20,13 +21,11 @@
 int main()
 {
 
-    auto t0 = std::chrono::high_resolution_clock::now();
-    auto xparse5 = new xmlParser("C:/Users/jr83522/Desktop/E3_1_2_Premium_V12.04.20A_AR430_20201011_HCP4_uC1_1_BP.arxml");
+    std::string pathToFile = "C:/Users/jr83522/Desktop/E3_1_2_Premium_V12.04.20A_AR430_20201011_IPB_BP.arxml";
+    auto xparse5 = std::make_shared<xmlParser>(pathToFile);
     xparse5->parse();
-    auto t1 = std::chrono::high_resolution_clock::now();
-    delete xparse5;
+    xParsePtr = xparse5;
 
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() << "ms\n";
     //init
     asio::io_service ios;
     asio::ip::tcp::endpoint endPoint(asio::ip::address::from_string("127.0.0.1"), 12730);
@@ -43,8 +42,6 @@ int main()
     parser.register_request_callback("shutdown", requests::shutdown);
     parser.register_request_callback("textDocument/hover", requests::textDocument::hover);
     parser.register_request_callback("textDocument/definition", requests::textDocument::definition);
-    parser.register_request_callback("textDocument/declaration", requests::textDocument::definition);
-    parser.register_request_callback("textDocument/implementation", requests::textDocument::definition);
 
     while(1)
     {

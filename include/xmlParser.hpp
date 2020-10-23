@@ -18,11 +18,11 @@ public:
     ~xmlParser();
 
     void parse();
-    lsp::LocationLink getDefinition(lsp::TextDocumentPositionParams posParams);
-    std::vector<lsp::LocationLink> getReferences(lsp::TextDocumentPositionParams posParams);
+    lsp::LocationLink getDefinition(const lsp::TextDocumentPositionParams &posParams);
+    std::vector<lsp::LocationLink> getReferences(const lsp::TextDocumentPositionParams &posParams);
 
-    lsp::Position getPositionFromOffset(uint32_t offset);
-    uint32_t getOffsetFromPosition(lsp::Position pos);
+    lsp::Position getPositionFromOffset(const uint32_t offset);
+    uint32_t getOffsetFromPosition(const lsp::Position &pos);
 
 private:
     void parseShortnames();

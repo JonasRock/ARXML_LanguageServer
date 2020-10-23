@@ -6,6 +6,7 @@
 #include "jsonrpcpp.hpp"
 
 #include "configurationGlobals.h"
+#include "types.hpp"
 
 
 using namespace nlohmann;
@@ -18,8 +19,6 @@ namespace requests
             {"capabilities", {
                 {"hoverProvider", true},
                 {"definitionProvider", true},
-                {"declarationProvider", true},
-                {"implementationProvider", true}
             }}
         };
         return std::make_shared<jsonrpcpp::Response>(id, result);
@@ -49,23 +48,14 @@ namespace requests
 
         jsonrpcpp::response_ptr definition(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
         {
-            json paramsjson = params.to_json();
-            uint32_t line = paramsjson["position"]["line"];
-            uint32_t character = paramsjson["position"]["character"];
-            json result = {
-                {"uri", "file:///c%3a/Users%/jr83522/Desktop/E3_1_2_Premium_V12.04.20A_AR430_20201011_Airbag_6D_BP.arxml" },
-                {"range", {
-                    {"start", {
-                        {"line", line - 2},
-                        {"character", character - 2}
-                    }},
-                    {"end", {
-                        {"line", line - 2},
-                        {"character", character + 2}
-                    }}
-                }}
-            };
-            return std::make_shared<jsonrpcpp::Response>(id, result);
+            lsp::TextDocumentPositionParams p = params.to_json().get<lsp::TextDocumentPositionParams>();
+            std::string docUri = p.textDocument.uri;
+            lsp::LocationLink link = (*configurationGlobals::xParsePtr).getDefinition(p);
+
+            //Check for parsed docUri
+            //If not yet parsed, parse it
+            //If parsed, continue
+
         }
     }
 }

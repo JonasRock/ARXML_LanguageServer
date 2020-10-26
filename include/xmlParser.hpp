@@ -19,7 +19,7 @@ public:
 
     void parse();
     lsp::LocationLink getDefinition(const lsp::TextDocumentPositionParams &posParams);
-    std::vector<lsp::LocationLink> getReferences(const lsp::TextDocumentPositionParams &posParams);
+    std::vector<lsp::Location> getReferences(const lsp::ReferenceParams &posParams);
 
     lsp::Position getPositionFromOffset(const uint32_t offset);
     uint32_t getOffsetFromPosition(const lsp::Position &pos);

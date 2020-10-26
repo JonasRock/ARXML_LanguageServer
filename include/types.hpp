@@ -52,5 +52,19 @@ namespace lsp
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextDocumentPositionParams, textDocument, position)
 
+    struct ReferenceContext
+    {
+        bool includeDeclaration;
+    };
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ReferenceContext, includeDeclaration)
+
+    struct ReferenceParams
+    {
+        lsp::TextDocumentIdentifier textDocument;
+        lsp::Position position;
+        lsp::ReferenceContext context;
+    };
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ReferenceParams, textDocument, position, context)
+
 }
 #endif /* TYPES_H */

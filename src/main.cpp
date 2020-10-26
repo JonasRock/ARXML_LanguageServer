@@ -33,7 +33,7 @@ int main()
     parser.register_notification_callback("exit", methods::notification_exit);
     parser.register_request_callback("initialize", methods::request_initialize);
     parser.register_request_callback("shutdown", methods::request_shutdown);
-    parser.register_request_callback("textDocument/hover", methods::request_textDocument_hover);
+    parser.register_request_callback("textDocument/references", methods::request_textDocument_references);
     parser.register_request_callback("textDocument/definition", methods::request_textDocument_definition);
 
     while(1)

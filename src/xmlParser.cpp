@@ -229,7 +229,7 @@ uint32_t xmlParser::getOffsetFromPosition(const lsp::Position &pos)
 lsp::LocationLink xmlParser::getDefinition(const lsp::TextDocumentPositionParams &params)
 {
     uint32_t offset = getOffsetFromPosition(params.position);
-    referenceRange ref = storage.getReference(offset);
+    referenceRange ref = storage.getReferenceByOffset(offset);
     
     lsp::LocationLink link;
     link.originSelectionRange.start = getPositionFromOffset(ref.refOffsetRange.first);
@@ -240,4 +240,42 @@ lsp::LocationLink xmlParser::getDefinition(const lsp::TextDocumentPositionParams
     link.targetUri = params.textDocument.uri;
 
     return link;
+}
+
+std::vector<lsp::Location> xmlParser::getReferences(const lsp::ReferenceParams &params)
+{
+    uint32_t offset = getOffsetFromPosition(params.position);
+    std::pair<uint32_t, uint32_t> ref = storage.getByOffset(offset).getOffsetRange();
+
+    std::vector<lsp::Location> foundReferences;
+
+    if (params.context.includeDeclaration)
+    {
+        lsp::Location toAdd;
+        toAdd.uri = params.textDocument.uri;
+        toAdd.range.start = getPositionFromOffset(ref.first);
+        toAdd.range.end = getPositionFromOffset(ref.second);
+        foundReferences.push_back(toAdd);
+    }
+
+    for (auto &a : storage.references)
+    {
+        if( a.targetOffsetRange.first >= ref.first && a.targetOffsetRange.second <= ref.second)
+        {
+            lsp::Location toAdd;
+            toAdd.uri = params.textDocument.uri;
+            toAdd.range.start = getPositionFromOffset(a.refOffsetRange.first);
+            toAdd.range.end = getPositionFromOffset(a.refOffsetRange.second);
+            foundReferences.push_back(toAdd);
+        }
+    }
+
+    if (!foundReferences.size())
+    {
+        throw lsp::elementNotFoundException();
+    } else
+    {
+        return foundReferences;
+    }
+    
 }

@@ -70,7 +70,8 @@ public:
     const shortnameElement &getByFullPath(const std::string &searchPath) const;
     //Throws std::elementNotFoundException
     const shortnameElement &getByOffset(const uint32_t searchOffset) const;
-    const referenceRange &getReference(const uint32_t searchOffset) const;
+    const referenceRange &getReferenceByOffset(const uint32_t searchOffset) const;
+    std::deque<referenceRange> references;
 
 
     shortnameStorage()
@@ -81,7 +82,6 @@ public:
     
 private:
     shortnameContainer_t shortnames;
-    std::deque<referenceRange> references;
     shortnameContainer_t::index<fullPathIndex_t>::type &fullPathIndex;
     shortnameContainer_t::index<offsetIndex_t>::type &offsetIndex;
 };

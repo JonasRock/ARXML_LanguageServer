@@ -20,7 +20,7 @@ using namespace nlohmann;
     {
         json result = {
             {"capabilities", {
-                {"hoverProvider", true},
+                {"referencesProvider", true},
                 {"definitionProvider", true},
             }}
         };
@@ -34,16 +34,19 @@ using namespace nlohmann;
         return std::make_shared<jsonrpcpp::Response>(id, result);
     }
 
-    jsonrpcpp::response_ptr methods::request_textDocument_hover(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+    jsonrpcpp::response_ptr methods::request_textDocument_references(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
     {
-        json paramsjson = params.to_json();
-        std::stringstream hoverResult;
-        hoverResult << "Hovering at line: " << paramsjson["position"]["line"];
-        hoverResult << " and character: " << paramsjson["position"]["character"] << "\n";
-        json result = {
-            {"contents", hoverResult.str()}
-        };
-
+        lsp::ReferenceParams p = params.to_json().get<lsp::ReferenceParams>();
+        json result;
+        try
+        {
+            std::vector<lsp::Location> resVec = prepareParser(p.textDocument.uri)->getReferences(p);
+            result = resVec;
+        }
+        catch (lsp::elementNotFoundException &e)
+        {
+            result = nullptr;
+        }
         return std::make_shared<jsonrpcpp::Response>(id, result);
     }
 

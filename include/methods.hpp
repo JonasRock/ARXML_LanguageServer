@@ -15,7 +15,7 @@ class methods
 public:
     static jsonrpcpp::response_ptr request_initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_shutdown(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
-    static jsonrpcpp::response_ptr request_textDocument_hover(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
+    static jsonrpcpp::response_ptr request_textDocument_references(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_textDocument_definition(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static void notification_initialized(const jsonrpcpp::Parameter &params);
     static void notification_exit(const jsonrpcpp::Parameter &params);

@@ -1,24 +1,27 @@
 #ifndef METHODS_H
 #define METHODS_H
 
+#include <memory>
+#include <map>
+#include <utility>
+
 #include "jsonrpcpp.hpp"
+#include "xmlParser.hpp"
+#include "types.hpp"
 
-namespace requests
-{
-    jsonrpcpp::response_ptr initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
-    jsonrpcpp::response_ptr shutdown(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
-    
-    namespace textDocument
-    {
-        jsonrpcpp::response_ptr hover(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
-        jsonrpcpp::response_ptr definition(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
-    }
-}
 
-namespace notifications
+class methods
 {
-    void initialized(const jsonrpcpp::Parameter &params);
-    void exit(const jsonrpcpp::Parameter &params);
-}
+public:
+    static jsonrpcpp::response_ptr request_initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
+    static jsonrpcpp::response_ptr request_shutdown(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
+    static jsonrpcpp::response_ptr request_textDocument_hover(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
+    static jsonrpcpp::response_ptr request_textDocument_definition(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
+    static void notification_initialized(const jsonrpcpp::Parameter &params);
+    static void notification_exit(const jsonrpcpp::Parameter &params);
+private:
+    inline static std::map<std::string, std::shared_ptr<xmlParser>> parsers;
+    static std::shared_ptr<xmlParser> prepareParser(const lsp::DocumentUri);
+};
 
 #endif /* METHODS_H */

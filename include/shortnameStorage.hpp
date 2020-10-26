@@ -6,15 +6,15 @@
 #include <deque>
 #include "boost/multi_index_container.hpp"
 #include "boost/multi_index/ordered_index.hpp"
-#include "boost/multi_index/identity.hpp"
 #include "boost/multi_index/mem_fun.hpp"
+#include "boost/multi_index/member.hpp"
 
 using namespace boost;
 
 struct referenceRange
 {
     std::pair<uint32_t, uint32_t> refOffsetRange;
-    uint32_t targetOffset;
+    std::pair<uint32_t, uint32_t> targetOffsetRange;
 };
 
 class shortnameElement
@@ -31,21 +31,13 @@ public:
 
     const std::pair<uint32_t, uint32_t> getOffsetRange() const
     {
-        return std::make_pair(fileOffset, name.size());
+        return std::make_pair(fileOffset, fileOffset + name.size());
     }
 
     //Returns the full path of the shortname including itself
     std::string getFullPath () const
     {
         return path + "/" + name;
-    }
-
-    const bool operator<(const shortnameElement &elem2)
-    {
-        if(fileOffset < elem2.fileOffset)
-            return true;
-        else
-            return false;
     }
 };
 
@@ -62,7 +54,7 @@ typedef multi_index_container<
             >,
             multi_index::ordered_unique<
                 multi_index::tag<offsetIndex_t>,
-                multi_index::identity<shortnameElement>
+                multi_index::member<shortnameElement, uint32_t, &shortnameElement::fileOffset>
             >
         >
     > shortnameContainer_t;
@@ -75,9 +67,11 @@ public:
     void addShortname(const shortnameElement &elem);
     void addReference(const referenceRange &ref);
     //Throws std::elementNotFoundException
-    shortnameElement &getByFullPath(const std::string &searchPath);
+    const shortnameElement &getByFullPath(const std::string &searchPath) const;
     //Throws std::elementNotFoundException
-    shortnameElement &getByOffset(const uint32_t searchOffset);
+    const shortnameElement &getByOffset(const uint32_t searchOffset) const;
+    const referenceRange &getReference(const uint32_t searchOffset) const;
+
 
     shortnameStorage()
         : shortnames(), references(),

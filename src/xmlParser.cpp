@@ -20,7 +20,6 @@ xmlParser::xmlParser(std::string pathname)
 
 xmlParser::~xmlParser()
 {
-    mmap.close();
 }
 
 void xmlParser::parse()
@@ -33,10 +32,11 @@ void xmlParser::parse()
     parseShortnames();
     auto t3 = std::chrono::high_resolution_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << "ms - Shortnames\n";
-    //auto t4 = std::chrono::high_resolution_clock::now();
-    //parseReferences();
-    //auto t5 = std::chrono::high_resolution_clock::now();
-    //std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t5-t4).count() << "ms - References\n";
+    auto t4 = std::chrono::high_resolution_clock::now();
+    parseReferences();
+    auto t5 = std::chrono::high_resolution_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t5-t4).count() << "ms - References\n";
+    mmap.close();
 }
 
 void xmlParser::parseShortnames()
@@ -91,12 +91,8 @@ void xmlParser::parseShortnames()
 
             const char* endChar = static_cast<const char*>(memchr(begin, '<', end - begin)); //Find the closing tag
             std::string shortnameString(begin, static_cast<uint32_t>(endChar-begin));
-            shortnameElement element;
-            element.name = shortnameString;
-            element.fileOffset = begin - start;
 
             //add the found shortname to the tree, according to the depths of the other components
-
             std::string pathString = "";
             for(auto i: depths)
             {
@@ -107,11 +103,14 @@ void xmlParser::parseShortnames()
             {
                 pathString.pop_back();
             }
-            element.path = pathString;
-            storage.addShortname(element);
-
             depths.push_back(std::make_pair(depth, shortnameString));
 
+            shortnameElement element;
+            element.name = shortnameString;
+            element.path = pathString;
+            element.fileOffset = begin - start;
+
+            storage.addShortname(element);
             begin = endChar + 13;
         }
 
@@ -173,7 +172,7 @@ void xmlParser::parseNewlines()
 
 void xmlParser::parseReferences()
 {
-    const std::string searchPattern = " DEST=\"";
+    const std::string searchPattern = "REF DEST=\"";
     std::boyer_moore_searcher searcher(searchPattern.begin(), searchPattern.end());
     auto it = mmap.const_begin();
     
@@ -193,9 +192,17 @@ void xmlParser::parseReferences()
             it += 2; //Remove '/' at the front
             const char* endOfReference = static_cast<const char*>(memchr(it, '<', end - it));
             std::string refString(it, static_cast<uint32_t>(endOfReference-it));
-            referenceRange ref;
-            ref.refOffsetRange = std::make_pair(static_cast<uint32_t>(it - start), static_cast<uint32_t>(endOfReference - start - 1));
-            ref.targetOffset = storage.getByFullPath(refString);
+            try{
+                shortnameElement target = storage.getByFullPath(refString);
+                referenceRange ref;
+                ref.targetOffsetRange = std::make_pair(target.fileOffset, static_cast<uint32_t>(target.fileOffset + target.name.size()));
+                ref.refOffsetRange = std::make_pair(static_cast<uint32_t>(it - start), static_cast<uint32_t>(endOfReference - start - 1));
+                storage.addReference(ref);
+            }
+            catch (lsp::elementNotFoundException &e)
+            {
+                //no need to do anything, just ignore that reference
+            }
         }
         else
         {
@@ -207,9 +214,9 @@ void xmlParser::parseReferences()
 lsp::Position xmlParser::getPositionFromOffset(const uint32_t offset)
 {
     lsp::Position ret;
-    uint32_t index = std::lower_bound(newLineOffsets.begin(), newLineOffsets.end(), offset) - newLineOffsets.begin();
-    ret.line = index;
+    uint32_t index = std::lower_bound(newLineOffsets.begin(), newLineOffsets.end(), offset) - newLineOffsets.begin() - 1;
     ret.character = offset - newLineOffsets[index];
+    ret.line = index;
     return ret;
 }
 
@@ -218,14 +225,19 @@ uint32_t xmlParser::getOffsetFromPosition(const lsp::Position &pos)
     return newLineOffsets[pos.line] + pos.character;
 }
 
-/*
+
 lsp::LocationLink xmlParser::getDefinition(const lsp::TextDocumentPositionParams &params)
 {
     uint32_t offset = getOffsetFromPosition(params.position);
+    referenceRange ref = storage.getReference(offset);
+    
     lsp::LocationLink link;
+    link.originSelectionRange.start = getPositionFromOffset(ref.refOffsetRange.first);
+    link.originSelectionRange.end = getPositionFromOffset(ref.refOffsetRange.second);
+    link.targetRange.start = getPositionFromOffset(ref.targetOffsetRange.first);
+    link.targetRange.end = getPositionFromOffset(ref.targetOffsetRange.second);
+    link.targetSelectionRange = link.targetRange;
     link.targetUri = params.textDocument.uri;
-    link.
-    ///////////////////////////////////////////
-    //Need a faster way to get to an element by path
+
+    return link;
 }
-*/

@@ -20,28 +20,21 @@
 
 int main()
 {
-
-    std::string pathToFile = "C:/Users/jr83522/Desktop/E3_1_2_Premium_V12.04.20A_AR430_20201011_IPB_BP.arxml";
-    auto xparse5 = std::make_shared<xmlParser>(pathToFile);
-    xparse5->parse();
-    xParsePtr = xparse5;
-
     //init
     asio::io_service ios;
     asio::ip::tcp::endpoint endPoint(asio::ip::address::from_string("127.0.0.1"), 12730);
     asio::ip::tcp::socket socket(ios, endPoint.protocol());
     socket.connect(endPoint);
 
-
     jsonrpcpp::Parser parser;
 
     //Register the callbacks for the LPS messages
-    parser.register_notification_callback("initialized", notifications::initialized);
-    parser.register_notification_callback("exit", notifications::exit);
-    parser.register_request_callback("initialize", requests::initialize);
-    parser.register_request_callback("shutdown", requests::shutdown);
-    parser.register_request_callback("textDocument/hover", requests::textDocument::hover);
-    parser.register_request_callback("textDocument/definition", requests::textDocument::definition);
+    parser.register_notification_callback("initialized", methods::notification_initialized);
+    parser.register_notification_callback("exit", methods::notification_exit);
+    parser.register_request_callback("initialize", methods::request_initialize);
+    parser.register_request_callback("shutdown", methods::request_shutdown);
+    parser.register_request_callback("textDocument/hover", methods::request_textDocument_hover);
+    parser.register_request_callback("textDocument/definition", methods::request_textDocument_definition);
 
     while(1)
     {

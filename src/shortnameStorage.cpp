@@ -4,53 +4,54 @@
 #include "shortnameStorage.hpp"
 #include "lspExceptions.hpp"
 
-void shortnameStorage::add(const shortnameElement &elem)
+const shortnameElement &shortnameStorage::getByFullPath(const std::string &searchString) const
 {
-    shortnames.push_back(elem);
-}
-
-shortnameElement &shortnameStorage::getByFullPath(const std::string &searchString)
-{
-    auto ret = std::find_if(shortnames.begin(), shortnames.end(),
-        [&searchString] (const shortnameElement &elem)
-        {
-            return !(elem.getFullPath().compare(searchString));
-        }
-    );
-    if(ret != shortnames.end())
+    auto res = fullPathIndex.find(searchString);
+    if (res != fullPathIndex.end())
     {
-        return (*ret);
+        return *res;
     }
     else throw lsp::elementNotFoundException();
 }
 
-shortnameElement &shortnameStorage::getByOffset(const uint32_t searchOffset)
+const shortnameElement &shortnameStorage::getByOffset(const uint32_t searchOffset) const
 {
-    auto ret = std::find_if(shortnames.begin(), shortnames.end(),
-        [&searchOffset] (const shortnameElement &elem)
+    auto res = offsetIndex.find(searchOffset);
+    if( res != offsetIndex.end())
+    {
+        return *res;
+    }
+    else throw lsp::elementNotFoundException();
+}
+
+void shortnameStorage::addShortname(const shortnameElement &elem /*, const auto hint */)
+{
+    //emplace_hint for improved performance?
+    offsetIndex.emplace(elem);
+}
+
+void shortnameStorage::addReference(const referenceRange &ref)
+{
+    references.push_back(ref);
+}
+
+const referenceRange &shortnameStorage::getReference(const uint32_t searchOffset) const
+{
+    auto res = std::find_if(references.begin(), references.end(),
+    [searchOffset](const referenceRange &range)
+    {
+        if (range.refOffsetRange.first <= searchOffset && range.refOffsetRange.second >= searchOffset)
         {
-            auto offsetRange = elem.getOffsetRange();
-            return (searchOffset >= offsetRange.first && searchOffset <= offsetRange.second);
+            return true;
         }
-    );
-    if(ret != shortnames.end())
+        else
+        {
+            return false;
+        }
+    });
+    if( res != references.end())
     {
-        return (*ret);
+        return *res;
     }
-    else throw lsp::elementNotFoundException();;
-}
-
-const shortnameTreeNode* shortnameStorage::resolvePath(const std::string &path)
-{
-    return resolvePath(path, &shortnames);
-}
-
-const shortnameTreeNode* shortnameStorage::resolvePath(const std::string &path, const shortnameTreeNode* searchRoot)
-{
-    if (path == "")
-        return searchRoot;
-    else
-    {
-        (*searchRoot)
-    }
+    else throw lsp::elementNotFoundException();
 }

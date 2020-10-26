@@ -7,7 +7,6 @@ namespace configurationGlobals
 {
     extern bool receivedShutdownRequest;
     extern bool shutdownReady;
-    extern std::shared_ptr<xmlParser> xParsePtr;
 }
 
 #endif /* CONFIGURATIONGLOBALS_H */

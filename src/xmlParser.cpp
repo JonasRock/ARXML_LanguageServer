@@ -108,7 +108,7 @@ void xmlParser::parseShortnames()
             shortnameElement element;
             element.name = shortnameString;
             element.path = pathString;
-            element.fileOffset = begin - start;
+            element.fileOffset = begin - start - 1;
 
             storage.addShortname(element);
             begin = endChar + 13;
@@ -196,7 +196,7 @@ void xmlParser::parseReferences()
                 shortnameElement target = storage.getByFullPath(refString);
                 referenceRange ref;
                 ref.targetOffsetRange = std::make_pair(target.fileOffset, static_cast<uint32_t>(target.fileOffset + target.name.size()));
-                ref.refOffsetRange = std::make_pair(static_cast<uint32_t>(it - start), static_cast<uint32_t>(endOfReference - start - 1));
+                ref.refOffsetRange = std::make_pair(static_cast<uint32_t>(it - start - 2), static_cast<uint32_t>(endOfReference - start - 1));
                 storage.addReference(ref);
             }
             catch (lsp::elementNotFoundException &e)
@@ -230,12 +230,24 @@ lsp::LocationLink xmlParser::getDefinition(const lsp::TextDocumentPositionParams
 {
     uint32_t offset = getOffsetFromPosition(params.position);
     referenceRange ref = storage.getReferenceByOffset(offset);
+
+    uint32_t cursorDistanceFromRefBegin = offset - ref.refOffsetRange.first;
+
+    //Get the shortname pointed at, so we can see its path and calculate where
+    //on the reference we clicked, so we can go to the different parts of the path
+    shortnameElement elem = storage.getByOffset(ref.targetOffsetRange.first);
+    std::string fullPath = elem.getFullPath();
+    std::string searchPath = std::string(
+        fullPath.begin(),
+        std::find(fullPath.begin() + cursorDistanceFromRefBegin, fullPath.end(), '/')
+    );
+    elem = storage.getByFullPath(searchPath);
     
     lsp::LocationLink link;
-    link.originSelectionRange.start = getPositionFromOffset(ref.refOffsetRange.first);
-    link.originSelectionRange.end = getPositionFromOffset(ref.refOffsetRange.second);
-    link.targetRange.start = getPositionFromOffset(ref.targetOffsetRange.first);
-    link.targetRange.end = getPositionFromOffset(ref.targetOffsetRange.second);
+    link.originSelectionRange.start = getPositionFromOffset(elem.getOffsetRange().first);
+    link.originSelectionRange.end = getPositionFromOffset(elem.getOffsetRange().second);
+    link.targetRange.start = getPositionFromOffset(elem.getOffsetRange().first);
+    link.targetRange.end = getPositionFromOffset(elem.getOffsetRange().second);
     link.targetSelectionRange = link.targetRange;
     link.targetUri = params.textDocument.uri;
 

@@ -37,7 +37,14 @@ public:
     //Returns the full path of the shortname including itself
     std::string getFullPath () const
     {
-        return path + "/" + name;
+        if(path.size())
+        {
+            return path + "/" + name;
+        }
+        else
+        {
+            return name;
+        }
     }
 };
 

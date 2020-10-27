@@ -80,15 +80,16 @@ using namespace nlohmann;
     std::shared_ptr<xmlParser> methods::prepareParser(const lsp::DocumentUri uri)
     {
         std::string docString = std::string(uri.begin() + 5, uri.end());
-        docString.replace(docString.find("%3A"), 3, ":");
+        auto repBegin = docString.find("%3A");
+        docString.replace(repBegin, 3, ":");
+        std::string sanitizedDocString = docString.substr(repBegin-1);
 
-        auto it = parsers.find(docString);
+        auto it = parsers.find(sanitizedDocString);
         if(it == parsers.end())
         {
-            auto ret = parsers.emplace(std::make_pair(docString, std::make_shared<xmlParser>(docString)));
+            auto ret = parsers.emplace(std::make_pair(sanitizedDocString, std::make_shared<xmlParser>(sanitizedDocString)));
             ret.first->second->parse();
             return ret.first->second;
-            
         }
 
         return it->second;

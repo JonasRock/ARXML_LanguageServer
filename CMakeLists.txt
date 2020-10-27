@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.10)
 
 project(ARXML_LanguageServer VERSION 0.1)
 
+######## configuration Options ########
+
+# Set the path to the boost/iostreams/src/mapped_file.cpp
+set(BOOST_MAPPED_FILE_CPP_PATH )
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(GCC_COVERAGE_COMPILE_FLAGS "-fdiagnostics-color")

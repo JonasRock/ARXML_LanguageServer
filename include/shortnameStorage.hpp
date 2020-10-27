@@ -1,6 +1,16 @@
 #ifndef SHORTNAMESTORAGE_H
 #define SHORTNAMESTORAGE_H
 
+/**
+ * @file shortnameStorage.hpp
+ * @author Jonas Rock
+ * @brief contains the data structures for storage of parsed data
+ * @version 0.1
+ * @date 2020-10-27
+ * 
+ * 
+ */
+
 #include <string>
 #include <cstdint>
 #include <deque>
@@ -17,6 +27,11 @@ struct referenceRange
     std::pair<uint32_t, uint32_t> targetOffsetRange;
 };
 
+
+/**
+ * @brief contains all important info for a given shortname
+ * 
+ */
 class shortnameElement
 {
 public:
@@ -26,9 +41,8 @@ public:
     std::string name;
     //the offset in the file to the first character of the shortname
     uint32_t fileOffset;
-    //vector of the start positions of the references in the file
-    //std::list<uint32_t> referenceOffsets;
 
+    //Returns the start and end offsets of the shortname
     const std::pair<uint32_t, uint32_t> getOffsetRange() const
     {
         return std::make_pair(fileOffset, fileOffset + name.size());
@@ -48,9 +62,13 @@ public:
     }
 };
 
-//Only used as tags for the multi-index container
+/** @cond
+ * 
+ *  @brief only used as tags for the multi_index_container indices
+ */
 struct fullPathIndex_t {};
 struct offsetIndex_t {};
+/// @endcond
 
 typedef multi_index_container<
         shortnameElement,
@@ -66,18 +84,58 @@ typedef multi_index_container<
         >
     > shortnameContainer_t;
 
-
-
+/**
+ * @brief class that managaes the parsed reference and shortname data
+ * 
+ */
 class shortnameStorage
 {
 public:
+    /**
+     * @brief adds a given shortname element to the storage
+     * 
+     * @param elem element to be inserted
+     */
     void addShortname(const shortnameElement &elem);
+
+    /**
+     * @brief adds a given reference element to the storage
+     * 
+     * @param ref reference to be inserted
+     */
     void addReference(const referenceRange &ref);
-    //Throws std::elementNotFoundException
+
+    /**
+     * @brief Get a shortname from storage by its full path, including its name
+     * 
+     * @param searchPath the pathString to search for
+     * @return const shortnameElement& 
+     * @exception lsp::elementNotFoundException When no result can be found using the searchPath
+     */
     const shortnameElement &getByFullPath(const std::string &searchPath) const;
-    //Throws std::elementNotFoundException
+
+    /**
+     * @brief Get a shortname from storage by a offset
+     * 
+     * @param searchOffset the offset to search for 
+     * @return const shortnameElement& 
+     * @exception lsp::elementNotFoundException When no result can be found
+     */
     const shortnameElement &getByOffset(const uint32_t searchOffset) const;
+
+    /**
+     * @brief Get a reference by its offset
+     * 
+     * @param searchOffset the offset to search fo
+     * @return const referenceRange& 
+     * @exception lsp::elementNotFoundException When no result can be found
+     */
     const referenceRange &getReferenceByOffset(const uint32_t searchOffset) const;
+
+    /**
+     * @brief The container for all references
+     * 
+     */
     std::deque<referenceRange> references;
 
 

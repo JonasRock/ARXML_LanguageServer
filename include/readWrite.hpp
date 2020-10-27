@@ -1,6 +1,16 @@
 #ifndef READWRITE_H
 #define READWRITE_H
 
+/**
+ * @file readWrite.hpp
+ * @author Jonas Rock
+ * @brief declarations of read/write functionality
+ * @version 0.1
+ * @date 2020-10-27
+ * 
+ * 
+ */
+
 #include <string>
 
 #include "boost/asio.hpp"

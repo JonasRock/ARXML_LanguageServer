@@ -1,3 +1,13 @@
+/**
+ * @file main.cpp
+ * @author Jonas Rock
+ * @brief socket connection and callback registration goes here
+ * @version 0.1
+ * @date 2020-10-27
+ *
+ * 
+ */
+
 #include <iostream>
 #include <string>
 

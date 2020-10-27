@@ -1,3 +1,12 @@
+/**
+ * @file readWrite.cpp
+ * @author Jonas Rock
+ * @brief Implementation of read/write
+ * @version 0.1
+ * @date 2020-10-27
+ * 
+ * 
+ */
 
 #include <iostream>
 #include <string>
@@ -7,7 +16,13 @@
 
 using namespace boost;
 
-
+/**
+ * @brief read from socket and remove protocol header
+ * 
+ * @param socket 
+ * @param message string to write result to
+ * @return std::size_t number of read bytes, including header
+ */
 std::size_t read_(asio::ip::tcp::socket &socket, std::string &message)
 {
     while(socket.available() < 26)
@@ -59,7 +74,13 @@ std::size_t read_(asio::ip::tcp::socket &socket, std::string &message)
     return headerLength + contentLength;
 }
 
-
+/**
+ * @brief generate protocol header and send to socket
+ * 
+ * @param socket 
+ * @param message string to send
+ * @return std::size_t number of bytes sent, including header
+ */
 std::size_t write_(asio::ip::tcp::socket &socket, const std::string &message)
 {
     asio::streambuf sendBuf;

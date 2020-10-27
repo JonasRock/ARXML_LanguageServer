@@ -1,3 +1,13 @@
+/**
+ * @file lspExceptions.hpp
+ * @author Jonas Rock
+ * @brief custom exceptions
+ * @version 0.1
+ * @date 2020-10-27
+ * 
+ * 
+ */
+
 #include <exception>
 
 namespace lsp

@@ -1,6 +1,16 @@
 #ifndef XMLPARSER_H
 #define XMLPARSER_H
 
+/**
+ * @file xmlParser.hpp
+ * @author Jonas rock
+ * @brief contains the xmlParser used to process arxml files
+ * @version 0.1
+ * @date 2020-10-27
+ * 
+ * 
+ */
+
 #include <vector>
 #include <cstdint>
 
@@ -11,6 +21,10 @@
 
 using namespace boost;
 
+/**
+ * @brief contains all functionality to parse shortnames and references
+ * 
+ */
 class xmlParser
 {
 public:

@@ -1,3 +1,13 @@
+/**
+ * @file xmlParser.cpp
+ * @author Jonas Rock
+ * @brief implementation of arxml file parsing
+ * @version 0.1
+ * @date 2020-10-27
+ * 
+ * 
+ */
+
 #include <string>
 #include <iostream>
 #include <chrono>
@@ -22,6 +32,10 @@ xmlParser::~xmlParser()
 {
 }
 
+/**
+ * @brief parse file into shortnameStorage
+ * 
+ */
 void xmlParser::parse()
 {
     auto t0 = std::chrono::high_resolution_clock::now();
@@ -39,6 +53,10 @@ void xmlParser::parse()
     mmap.close();
 }
 
+/**
+ * @brief second step of the parsing process is extracting all shortnames and their corresponding information
+ * 
+ */
 void xmlParser::parseShortnames()
 {
     const char* start = mmap.const_data();
@@ -143,6 +161,10 @@ void xmlParser::parseShortnames()
     }
 }
 
+/**
+ * @brief first step of the parsing process is to process all linebreaks as the format between lsp::Position and offset representation differs
+ * 
+ */
 void xmlParser::parseNewlines()
 {
 
@@ -170,6 +192,10 @@ void xmlParser::parseNewlines()
     }
 }
 
+/**
+ * @brief last step of the parsing process to find and link up the references to the parsed shortnames
+ * 
+ */
 void xmlParser::parseReferences()
 {
     const std::string searchPattern = "REF DEST=\"";

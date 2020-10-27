@@ -1,6 +1,16 @@
 #ifndef METHODS_H
 #define METHODS_H
 
+/**
+ * @file methods.hpp
+ * @author Jonas Rock
+ * @brief All callback declarations for Language Server Protocol notifications/requests go here
+ * @version 0.1
+ * @date 2020-10-27
+ * 
+ * 
+ */
+
 #include <memory>
 #include <map>
 #include <utility>

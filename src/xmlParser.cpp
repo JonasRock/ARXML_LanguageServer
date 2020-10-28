@@ -148,7 +148,7 @@ void xmlParser::parseShortnames(iostreams::mapped_file &mmap,std::shared_ptr<sho
             shortnameElement element;
             element.name = shortnameString;
             element.path = pathString;
-            element.fileOffset = begin - start - 1;
+            element.fileOffset = begin - start; //This one is correct
 
             storage->addShortname(element);
             begin = endChar + 13;
@@ -243,8 +243,8 @@ void xmlParser::parseReferences(iostreams::mapped_file &mmap, std::shared_ptr<sh
             try{
                 shortnameElement target = storage->getByFullPath(refString);
                 referenceRange ref;
-                ref.targetOffsetRange = std::make_pair(target.fileOffset, static_cast<uint32_t>(target.fileOffset + target.name.size() - 1));
-                ref.refOffsetRange = std::make_pair(static_cast<uint32_t>(it - start - 2), static_cast<uint32_t>(endOfReference - start - 1));
+                ref.targetOffsetRange = std::make_pair(target.fileOffset, static_cast<uint32_t>(target.fileOffset + target.name.size()) - 1); //This is correct
+                ref.refOffsetRange = std::make_pair(static_cast<uint32_t>(it - start - 1), static_cast<uint32_t>(endOfReference - start - 1)); //This is correct
                 storage->addReference(ref);
             }
             catch (lsp::elementNotFoundException &e)
@@ -295,7 +295,7 @@ lsp::LocationLink xmlParser::getDefinition(const lsp::TextDocumentPositionParams
     lsp::LocationLink link;
     link.originSelectionRange.start = getPositionFromOffset(elem.getOffsetRange().first);
     link.originSelectionRange.end = getPositionFromOffset(elem.getOffsetRange().second);
-    link.targetRange.start = getPositionFromOffset(elem.getOffsetRange().first);
+    link.targetRange.start = getPositionFromOffset(elem.getOffsetRange().first - 1);
     link.targetRange.end = getPositionFromOffset(elem.getOffsetRange().second);
     link.targetSelectionRange = link.targetRange;
     link.targetUri = params.textDocument.uri;
@@ -334,8 +334,8 @@ std::vector<lsp::Location> xmlParser::getReferences(const lsp::ReferenceParams &
         {
             lsp::Location toAdd;
             toAdd.uri = params.textDocument.uri;
-            toAdd.range.start = getPositionFromOffset(shortnameRange.first);
-            toAdd.range.end = getPositionFromOffset(shortnameRange.second + 1);
+            toAdd.range.start = getPositionFromOffset(shortnameRange.first - 1);
+            toAdd.range.end = getPositionFromOffset(shortnameRange.second);
             foundReferences.push_back(toAdd);
         }
         return foundReferences;

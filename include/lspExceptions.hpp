@@ -19,4 +19,12 @@ namespace lsp
             return "Could not find element";
         }
     };
+
+    struct malformedElementInsertionException : public std::exception
+    {
+        const char* what() const throw()
+        {
+            return "Element to be inserted is malformed";
+        }
+    };
 }

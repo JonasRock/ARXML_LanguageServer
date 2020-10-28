@@ -17,7 +17,7 @@
 using namespace boost;
 
 /**
- * @brief read from socket and remove protocol header
+ * @brief read from socket and remove protocol header (blocking/synchronous)
  * 
  * @param socket 
  * @param message string to write result to
@@ -75,7 +75,7 @@ std::size_t read_(asio::ip::tcp::socket &socket, std::string &message)
 }
 
 /**
- * @brief generate protocol header and send to socket
+ * @brief generate protocol header and send to socket (blocking/synchronous)
  * 
  * @param socket 
  * @param message string to send

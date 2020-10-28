@@ -30,8 +30,9 @@ const shortnameElement &shortnameStorage::getByOffset(const uint32_t searchOffse
     auto res = offsetIndex.upper_bound(searchOffset);
 
     //res now is a element with offset higher than searched, so we can see if the next lower element is correct
-    if( res == offsetIndex.end() || res == offsetIndex.begin())
-    {
+    if( res == offsetIndex.begin())
+    {   
+        //lowest element is already too big
         throw lsp::elementNotFoundException();
     }
     --res;
@@ -47,13 +48,28 @@ const shortnameElement &shortnameStorage::getByOffset(const uint32_t searchOffse
 
 void shortnameStorage::addShortname(const shortnameElement &elem /*, const auto hint */)
 {
-    //emplace_hint for improved performance?
-    offsetIndex.emplace_hint(offsetIndex.end(), elem);
+    if(elem.name.size())
+    {
+        offsetIndex.emplace_hint(offsetIndex.end(), elem);
+    }
+    else
+    {
+        throw lsp::malformedElementInsertionException();
+    }
 }
 
 void shortnameStorage::addReference(const referenceRange &ref)
 {
-    references.push_back(ref);
+    if(ref.refOffsetRange.first <= ref.refOffsetRange.second
+        && ref.targetOffsetRange.first <= ref.targetOffsetRange.second)
+    {
+        references.push_back(ref);
+    }
+    else
+    {
+        throw lsp::malformedElementInsertionException();
+    }
+    
 }
 
 const referenceRange &shortnameStorage::getReferenceByOffset(const uint32_t searchOffset) const

@@ -1,8 +1,6 @@
 # Using the extension #
 [TOC]
 
-TODO: FIX AUTOLINKS TO FILES
-
 ## Prerequesites ##
 
 The language server itself is currently Windows-x64 only. 

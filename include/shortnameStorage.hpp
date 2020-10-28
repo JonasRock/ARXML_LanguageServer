@@ -42,10 +42,10 @@ public:
     //the offset in the file to the first character of the shortname
     uint32_t fileOffset;
 
-    //Returns the start and end offsets of the shortname
+    //Returns the start and end offsets of the shortname, both inclusive, so the second value is still part of the name
     const std::pair<uint32_t, uint32_t> getOffsetRange() const
     {
-        return std::make_pair(fileOffset, fileOffset + name.size());
+        return std::make_pair(fileOffset, fileOffset + name.size() - 1);
     }
 
     //Returns the full path of the shortname including itself

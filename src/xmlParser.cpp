@@ -23,9 +23,8 @@
 
 using namespace boost;
 
-xmlParser::xmlParser(std::string pathname)
+xmlParser::xmlParser()
 {
-    mmap.open(pathname, iostreams::mapped_file::readonly);
 }
 
 xmlParser::~xmlParser()
@@ -33,31 +32,54 @@ xmlParser::~xmlParser()
 }
 
 /**
- * @brief parse file into shortnameStorage
+ * @brief If not yet parsed, parses the document and returns the storage of the parsed data
  * 
+ * @param uri Document to be parsed
+ * @return std::shared_ptr<shortnameStorage> the parsed data
  */
-void xmlParser::parse()
+std::shared_ptr<shortnameStorage> xmlParser::parse(const lsp::DocumentUri uri)
 {
-    auto t0 = std::chrono::high_resolution_clock::now();
-    parseNewlines();
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() << "ms - Newlines\n";
-    auto t2 = std::chrono::high_resolution_clock::now();
-    parseShortnames();
-    auto t3 = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << "ms - Shortnames\n";
-    auto t4 = std::chrono::high_resolution_clock::now();
-    parseReferences();
-    auto t5 = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t5-t4).count() << "ms - References\n";
-    mmap.close();
+    std::string docString = std::string(uri.begin() + 5, uri.end());
+    auto repBegin = docString.find("%3A");
+    docString.replace(repBegin, 3, ":");
+    std::string sanitizedDocString = docString.substr(repBegin-1);
+
+    auto it = storages.find(sanitizedDocString);
+    if (it != storages.end())
+    {
+        return it->second;
+    }
+    else
+    {
+        auto ret = storages.emplace(std::make_pair(sanitizedDocString, std::make_shared<shortnameStorage>())).first->second;
+        iostreams::mapped_file mmap(sanitizedDocString, iostreams::mapped_file::readonly);
+
+        auto t0 = std::chrono::high_resolution_clock::now();
+        parseNewlines(mmap);
+        auto t1 = std::chrono::high_resolution_clock::now();
+        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() << "ms - Newlines\n";
+        auto t2 = std::chrono::high_resolution_clock::now();
+        parseShortnames(mmap, ret);
+        auto t3 = std::chrono::high_resolution_clock::now();
+        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << "ms - Shortnames\n";
+        auto t4 = std::chrono::high_resolution_clock::now();
+        parseReferences(mmap, ret);
+        auto t5 = std::chrono::high_resolution_clock::now();
+
+        mmap.close();
+
+        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t5-t4).count() << "ms - References\n";
+        return ret;
+    }
+    
+    
 }
 
 /**
  * @brief second step of the parsing process is extracting all shortnames and their corresponding information
  * 
  */
-void xmlParser::parseShortnames()
+void xmlParser::parseShortnames(iostreams::mapped_file &mmap,std::shared_ptr<shortnameStorage> storage)
 {
     const char* start = mmap.const_data();
     const char* begin = start;
@@ -128,7 +150,7 @@ void xmlParser::parseShortnames()
             element.path = pathString;
             element.fileOffset = begin - start - 1;
 
-            storage.addShortname(element);
+            storage->addShortname(element);
             begin = endChar + 13;
         }
 
@@ -165,7 +187,7 @@ void xmlParser::parseShortnames()
  * @brief first step of the parsing process is to process all linebreaks as the format between lsp::Position and offset representation differs
  * 
  */
-void xmlParser::parseNewlines()
+void xmlParser::parseNewlines(iostreams::mapped_file &mmap)
 {
 
     const char* const start = mmap.const_data();
@@ -196,7 +218,7 @@ void xmlParser::parseNewlines()
  * @brief last step of the parsing process to find and link up the references to the parsed shortnames
  * 
  */
-void xmlParser::parseReferences()
+void xmlParser::parseReferences(iostreams::mapped_file &mmap, std::shared_ptr<shortnameStorage> storage)
 {
     const std::string searchPattern = "REF DEST=\"";
     std::boyer_moore_searcher searcher(searchPattern.begin(), searchPattern.end());
@@ -219,11 +241,11 @@ void xmlParser::parseReferences()
             const char* endOfReference = static_cast<const char*>(memchr(it, '<', end - it));
             std::string refString(it, static_cast<uint32_t>(endOfReference-it));
             try{
-                shortnameElement target = storage.getByFullPath(refString);
+                shortnameElement target = storage->getByFullPath(refString);
                 referenceRange ref;
-                ref.targetOffsetRange = std::make_pair(target.fileOffset, static_cast<uint32_t>(target.fileOffset + target.name.size()));
+                ref.targetOffsetRange = std::make_pair(target.fileOffset, static_cast<uint32_t>(target.fileOffset + target.name.size() - 1));
                 ref.refOffsetRange = std::make_pair(static_cast<uint32_t>(it - start - 2), static_cast<uint32_t>(endOfReference - start - 1));
-                storage.addReference(ref);
+                storage->addReference(ref);
             }
             catch (lsp::elementNotFoundException &e)
             {
@@ -254,20 +276,21 @@ uint32_t xmlParser::getOffsetFromPosition(const lsp::Position &pos)
 
 lsp::LocationLink xmlParser::getDefinition(const lsp::TextDocumentPositionParams &params)
 {
+    auto storage = parse(params.textDocument.uri);
     uint32_t offset = getOffsetFromPosition(params.position);
-    referenceRange ref = storage.getReferenceByOffset(offset);
+    referenceRange ref = storage->getReferenceByOffset(offset);
 
     uint32_t cursorDistanceFromRefBegin = offset - ref.refOffsetRange.first;
 
     //Get the shortname pointed at, so we can see its path and calculate where
     //on the reference we clicked, so we can go to the different parts of the path
-    shortnameElement elem = storage.getByOffset(ref.targetOffsetRange.first);
+    shortnameElement elem = storage->getByOffset(ref.targetOffsetRange.first);
     std::string fullPath = elem.getFullPath();
     std::string searchPath = std::string(
         fullPath.begin(),
         std::find(fullPath.begin() + cursorDistanceFromRefBegin, fullPath.end(), '/')
     );
-    elem = storage.getByFullPath(searchPath);
+    elem = storage->getByFullPath(searchPath);
     
     lsp::LocationLink link;
     link.originSelectionRange.start = getPositionFromOffset(elem.getOffsetRange().first);
@@ -282,23 +305,16 @@ lsp::LocationLink xmlParser::getDefinition(const lsp::TextDocumentPositionParams
 
 std::vector<lsp::Location> xmlParser::getReferences(const lsp::ReferenceParams &params)
 {
+    auto storage = parse(params.textDocument.uri);
     uint32_t offset = getOffsetFromPosition(params.position);
-    std::pair<uint32_t, uint32_t> ref = storage.getByOffset(offset).getOffsetRange();
+    std::pair<uint32_t, uint32_t> shortnameRange = storage->getByOffset(offset).getOffsetRange();
 
     std::vector<lsp::Location> foundReferences;
 
-    if (params.context.includeDeclaration)
-    {
-        lsp::Location toAdd;
-        toAdd.uri = params.textDocument.uri;
-        toAdd.range.start = getPositionFromOffset(ref.first);
-        toAdd.range.end = getPositionFromOffset(ref.second);
-        foundReferences.push_back(toAdd);
-    }
 
-    for (auto &a : storage.references)
+    for (auto &a : storage->references)
     {
-        if( a.targetOffsetRange.first >= ref.first && a.targetOffsetRange.second <= ref.second)
+        if( a.targetOffsetRange.first >= shortnameRange.first && a.targetOffsetRange.second <= shortnameRange.second)
         {
             lsp::Location toAdd;
             toAdd.uri = params.textDocument.uri;
@@ -311,9 +327,19 @@ std::vector<lsp::Location> xmlParser::getReferences(const lsp::ReferenceParams &
     if (!foundReferences.size())
     {
         throw lsp::elementNotFoundException();
-    } else
+    } 
+    else
     {
+        if (params.context.includeDeclaration)
+        {
+            lsp::Location toAdd;
+            toAdd.uri = params.textDocument.uri;
+            toAdd.range.start = getPositionFromOffset(shortnameRange.first);
+            toAdd.range.end = getPositionFromOffset(shortnameRange.second + 1);
+            foundReferences.push_back(toAdd);
+        }
         return foundReferences;
     }
+
     
 }

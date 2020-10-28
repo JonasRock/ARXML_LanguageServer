@@ -34,6 +34,7 @@ using namespace nlohmann;
                 {"definitionProvider", true},
             }}
         };
+        parser = std::make_shared<xmlParser>();
         return std::make_shared<jsonrpcpp::Response>(id, result);
     }
 
@@ -50,7 +51,7 @@ using namespace nlohmann;
         json result;
         try
         {
-            std::vector<lsp::Location> resVec = prepareParser(p.textDocument.uri)->getReferences(p);
+            std::vector<lsp::Location> resVec = parser->getReferences(p);
             result = resVec;
         }
         catch (lsp::elementNotFoundException &e)
@@ -66,7 +67,7 @@ using namespace nlohmann;
         json result;
         try
         {
-            lsp::LocationLink link = prepareParser(p.textDocument.uri)->getDefinition(p);
+            lsp::LocationLink link = parser->getDefinition(p);
             result = link;
         }
         catch (lsp::elementNotFoundException &e)
@@ -85,22 +86,4 @@ using namespace nlohmann;
     {
         if(configurationGlobals::receivedShutdownRequest)
             configurationGlobals::shutdownReady = true;
-    }
-
-    std::shared_ptr<xmlParser> methods::prepareParser(const lsp::DocumentUri uri)
-    {
-        std::string docString = std::string(uri.begin() + 5, uri.end());
-        auto repBegin = docString.find("%3A");
-        docString.replace(repBegin, 3, ":");
-        std::string sanitizedDocString = docString.substr(repBegin-1);
-
-        auto it = parsers.find(sanitizedDocString);
-        if(it == parsers.end())
-        {
-            auto ret = parsers.emplace(std::make_pair(sanitizedDocString, std::make_shared<xmlParser>(sanitizedDocString)));
-            ret.first->second->parse();
-            return ret.first->second;
-        }
-
-        return it->second;
     }

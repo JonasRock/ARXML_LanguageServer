@@ -30,8 +30,7 @@ public:
     static void notification_initialized(const jsonrpcpp::Parameter &params);
     static void notification_exit(const jsonrpcpp::Parameter &params);
 private:
-    inline static std::map<std::string, std::shared_ptr<xmlParser>> parsers;
-    static std::shared_ptr<xmlParser> prepareParser(const lsp::DocumentUri);
+    inline static std::shared_ptr<xmlParser> parser = nullptr;
 };
 
 #endif /* METHODS_H */

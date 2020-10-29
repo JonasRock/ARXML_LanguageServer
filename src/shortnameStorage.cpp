@@ -92,3 +92,34 @@ const referenceRange &shortnameStorage::getReferenceByOffset(const uint32_t sear
     }
     else throw lsp::elementNotFoundException();
 }
+
+const std::pair<uint32_t, uint32_t> shortnameElement::getOffsetRange() const
+{
+    return std::make_pair(fileOffset, fileOffset + name.size() - 1);
+}
+
+std::string shortnameElement::getFullPath () const
+{
+    if(path.size())
+    {
+        return path + "/" + name;
+    }
+    else
+    {
+        return name;
+    }
+}
+
+lsp::Position shortnameStorage::getPositionFromOffset(const uint32_t offset)
+{
+    lsp::Position ret;
+    uint32_t index = std::lower_bound(newlineOffsets.begin(), newlineOffsets.end(), offset) - newlineOffsets.begin() - 1;
+    ret.character = offset - newlineOffsets[index];
+    ret.line = index;
+    return ret;
+}
+
+uint32_t shortnameStorage::getOffsetFromPosition(const lsp::Position &pos)
+{
+    return newlineOffsets[pos.line] + pos.character;
+}

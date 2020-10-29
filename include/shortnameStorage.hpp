@@ -19,6 +19,8 @@
 #include "boost/multi_index/mem_fun.hpp"
 #include "boost/multi_index/member.hpp"
 
+#include "types.hpp"
+
 using namespace boost;
 
 struct referenceRange
@@ -43,31 +45,20 @@ public:
     uint32_t fileOffset;
 
     //Returns the start and end offsets of the shortname, both inclusive, so the second value is still part of the name
-    const std::pair<uint32_t, uint32_t> getOffsetRange() const
-    {
-        return std::make_pair(fileOffset, fileOffset + name.size() - 1);
-    }
+    const std::pair<uint32_t, uint32_t> getOffsetRange() const;
 
     //Returns the full path of the shortname including itself
-    std::string getFullPath () const
-    {
-        if(path.size())
-        {
-            return path + "/" + name;
-        }
-        else
-        {
-            return name;
-        }
-    }
+    std::string getFullPath () const;
 };
 
 /** @cond
  * 
  *  @brief only used as tags for the multi_index_container indices
  */
+
 struct fullPathIndex_t {};
 struct offsetIndex_t {};
+
 /// @endcond
 
 typedef multi_index_container<
@@ -132,23 +123,27 @@ public:
      */
     const referenceRange &getReferenceByOffset(const uint32_t searchOffset) const;
 
-    /**
-     * @brief The container for all references
-     * 
-     */
-    std::deque<referenceRange> references;
-
+    lsp::Position getPositionFromOffset(const uint32_t offset);
+    uint32_t getOffsetFromPosition(const lsp::Position &pos);
 
     shortnameStorage()
         : shortnames(), references(),
           fullPathIndex{shortnames.get<fullPathIndex_t>()},
           offsetIndex{shortnames.get<offsetIndex_t>()}
     {}
+
+    /**
+     * @brief The container for all references
+     * 
+     */
+    std::deque<referenceRange> references;
+    std::vector<uint32_t> newlineOffsets;
     
 private:
     shortnameContainer_t shortnames;
     shortnameContainer_t::index<fullPathIndex_t>::type &fullPathIndex;
     shortnameContainer_t::index<offsetIndex_t>::type &offsetIndex;
+    
 };
 
 #endif /* SHORTNAMESTORAGE_H */

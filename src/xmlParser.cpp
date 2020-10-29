@@ -55,7 +55,7 @@ std::shared_ptr<shortnameStorage> xmlParser::parse(const lsp::DocumentUri uri)
         iostreams::mapped_file mmap(sanitizedDocString, iostreams::mapped_file::readonly);
 
         auto t0 = std::chrono::high_resolution_clock::now();
-        parseNewlines(mmap);
+        parseNewlines(mmap, ret);
         auto t1 = std::chrono::high_resolution_clock::now();
         std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() << "ms - Newlines\n";
         auto t2 = std::chrono::high_resolution_clock::now();
@@ -187,7 +187,7 @@ void xmlParser::parseShortnames(iostreams::mapped_file &mmap,std::shared_ptr<sho
  * @brief first step of the parsing process is to process all linebreaks as the format between lsp::Position and offset representation differs
  * 
  */
-void xmlParser::parseNewlines(iostreams::mapped_file &mmap)
+void xmlParser::parseNewlines(iostreams::mapped_file &mmap, std::shared_ptr<shortnameStorage> storage)
 {
 
     const char* const start = mmap.const_data();
@@ -199,15 +199,15 @@ void xmlParser::parseNewlines(iostreams::mapped_file &mmap)
     {
         //First, go through once and count the number, so we can reserve enough space
         uint32_t numLines = std::count(start, end, '\n');
-        newLineOffsets.reserve(numLines + 1);
-        newLineOffsets.push_back(0);
+        storage->newlineOffsets.reserve(numLines + 1);
+        storage->newlineOffsets.push_back(0);
 
         while(begin && begin < end)
         {
             begin = static_cast<const char*>(memchr(begin, '\n', end - begin));
             if (begin)
             {
-                newLineOffsets.push_back(begin - start);
+                storage->newlineOffsets.push_back(begin - start);
                 begin++;
             }
         }
@@ -259,25 +259,12 @@ void xmlParser::parseReferences(iostreams::mapped_file &mmap, std::shared_ptr<sh
     }
 }
 
-lsp::Position xmlParser::getPositionFromOffset(const uint32_t offset)
-{
-    lsp::Position ret;
-    uint32_t index = std::lower_bound(newLineOffsets.begin(), newLineOffsets.end(), offset) - newLineOffsets.begin() - 1;
-    ret.character = offset - newLineOffsets[index];
-    ret.line = index;
-    return ret;
-}
-
-uint32_t xmlParser::getOffsetFromPosition(const lsp::Position &pos)
-{
-    return newLineOffsets[pos.line] + pos.character;
-}
 
 
 lsp::LocationLink xmlParser::getDefinition(const lsp::TextDocumentPositionParams &params)
 {
     auto storage = parse(params.textDocument.uri);
-    uint32_t offset = getOffsetFromPosition(params.position);
+    uint32_t offset = storage->getOffsetFromPosition(params.position);
     referenceRange ref = storage->getReferenceByOffset(offset);
 
     uint32_t cursorDistanceFromRefBegin = offset - ref.refOffsetRange.first;
@@ -293,10 +280,10 @@ lsp::LocationLink xmlParser::getDefinition(const lsp::TextDocumentPositionParams
     elem = storage->getByFullPath(searchPath);
     
     lsp::LocationLink link;
-    link.originSelectionRange.start = getPositionFromOffset(elem.getOffsetRange().first);
-    link.originSelectionRange.end = getPositionFromOffset(elem.getOffsetRange().second);
-    link.targetRange.start = getPositionFromOffset(elem.getOffsetRange().first - 1);
-    link.targetRange.end = getPositionFromOffset(elem.getOffsetRange().second);
+    link.originSelectionRange.start = storage->getPositionFromOffset(elem.getOffsetRange().first);
+    link.originSelectionRange.end = storage->getPositionFromOffset(elem.getOffsetRange().second);
+    link.targetRange.start = storage->getPositionFromOffset(elem.getOffsetRange().first - 1);
+    link.targetRange.end = storage->getPositionFromOffset(elem.getOffsetRange().second);
     link.targetSelectionRange = link.targetRange;
     link.targetUri = params.textDocument.uri;
 
@@ -306,23 +293,48 @@ lsp::LocationLink xmlParser::getDefinition(const lsp::TextDocumentPositionParams
 std::vector<lsp::Location> xmlParser::getReferences(const lsp::ReferenceParams &params)
 {
     auto storage = parse(params.textDocument.uri);
-    uint32_t offset = getOffsetFromPosition(params.position);
-    std::pair<uint32_t, uint32_t> shortnameRange = storage->getByOffset(offset).getOffsetRange();
-
     std::vector<lsp::Location> foundReferences;
-
-
-    for (auto &a : storage->references)
+    std::pair<uint32_t, uint32_t> shortnameRange;
+    try
     {
-        if( a.targetOffsetRange.first >= shortnameRange.first && a.targetOffsetRange.second <= shortnameRange.second)
+        uint32_t offset = storage->getOffsetFromPosition(params.position);
+        shortnameRange = storage->getByOffset(offset).getOffsetRange();
+
+        for (auto &a : storage->references)
         {
-            lsp::Location toAdd;
-            toAdd.uri = params.textDocument.uri;
-            toAdd.range.start = getPositionFromOffset(a.refOffsetRange.first);
-            toAdd.range.end = getPositionFromOffset(a.refOffsetRange.second);
-            foundReferences.push_back(toAdd);
+            if( a.targetOffsetRange.first >= shortnameRange.first && a.targetOffsetRange.second <= shortnameRange.second)
+            {
+                lsp::Location toAdd;
+                toAdd.uri = params.textDocument.uri;
+                toAdd.range.start = storage->getPositionFromOffset(a.refOffsetRange.first - 1);
+                toAdd.range.end = storage->getPositionFromOffset(a.refOffsetRange.second);
+                foundReferences.push_back(toAdd);
+            }
         }
     }
+    //No shortname at this position, but maybe its part of a reference
+    catch(const lsp::elementNotFoundException &e)
+    {
+        uint32_t offset = storage->getOffsetFromPosition(params.position);
+        referenceRange ref = storage->getReferenceByOffset(offset);
+        uint32_t cursorDistanceFromRefBegin = offset - ref.refOffsetRange.first;
+
+        //Get the shortname pointed at, so we can see its path and calculate where
+        //on the reference we clicked, so we can go to the different parts of the path
+        shortnameElement elem = storage->getByOffset(ref.targetOffsetRange.first);
+        std::string fullPath = elem.getFullPath();
+        std::string searchPath = std::string(
+            fullPath.begin(),
+            std::find(fullPath.begin() + cursorDistanceFromRefBegin, fullPath.end(), '/')
+        );
+        elem = storage->getByFullPath(searchPath);
+        lsp::ReferenceParams newParams = params;
+        lsp::Position newPos = storage->getPositionFromOffset(elem.fileOffset);
+        newParams.position = newPos;
+        //This will at not recurse more than 1 time, because now we can be sure to have an actual shortname position
+        return getReferences(newParams);
+    }
+    
 
     if (!foundReferences.size())
     {
@@ -334,8 +346,8 @@ std::vector<lsp::Location> xmlParser::getReferences(const lsp::ReferenceParams &
         {
             lsp::Location toAdd;
             toAdd.uri = params.textDocument.uri;
-            toAdd.range.start = getPositionFromOffset(shortnameRange.first - 1);
-            toAdd.range.end = getPositionFromOffset(shortnameRange.second);
+            toAdd.range.start = storage->getPositionFromOffset(shortnameRange.first - 1);
+            toAdd.range.end = storage->getPositionFromOffset(shortnameRange.second);
             foundReferences.push_back(toAdd);
         }
         return foundReferences;

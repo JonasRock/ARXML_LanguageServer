@@ -35,20 +35,15 @@ public:
     lsp::LocationLink getDefinition(const lsp::TextDocumentPositionParams &posParams);
     std::vector<lsp::Location> getReferences(const lsp::ReferenceParams &posParams);
 
-    lsp::Position getPositionFromOffset(const uint32_t offset);
-    uint32_t getOffsetFromPosition(const lsp::Position &pos);
-
 private:
     std::shared_ptr<shortnameStorage> parse(const lsp::DocumentUri uri);
     void parseShortnames(iostreams::mapped_file &mmap, std::shared_ptr<shortnameStorage> storage);
     void parseReferences(iostreams::mapped_file &mmap, std::shared_ptr<shortnameStorage> storage);
-    void parseNewlines(iostreams::mapped_file &mmap);
+    void parseNewlines(iostreams::mapped_file &mmap, std::shared_ptr<shortnameStorage> storage);
 
     //This tree contains the shortname path structure,
     //with the shortnames as keys and character offsets as values
     std::map<std::string, std::shared_ptr<shortnameStorage>> storages;
-
-    std::vector<uint32_t> newLineOffsets;
 };
 
 #endif /* XMLPARSER_H */

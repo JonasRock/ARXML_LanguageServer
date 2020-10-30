@@ -174,19 +174,3 @@ TEST_CASE("shortnameStorage - references")
         CHECK_THROWS_AS(storage.addReference(ref3), lsp::malformedElementInsertionException);
     }
 }
-
-TEST_CASE("XML Parser")
-{
-    SECTION("Parsing")
-    {
-
-    }
-    SECTION("Definitions")
-    {
-
-    }
-    SECTION("References")
-    {
-        
-    }
-}

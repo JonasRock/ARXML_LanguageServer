@@ -20,6 +20,7 @@
 #include "xmlParser.hpp"
 #include "configurationGlobals.h"
 
+
 //TODO: parseNewlines
 //TODO: toCharOffset, fromCharOffset
 //TODO: parseReferences - maybe add the positions as a array to the tree
@@ -28,12 +29,27 @@
 
 //TODO: change size_t to unit32_t, should be plenty
 
-int main()
+int main(int argc, char** argv)
 {
+    int portNr;
+
+    //Get the port from the command line
+    if( argc == 1 )
+    {
+        //No port specified
+        std::cout << "Specify port to connect to: ";
+        std::cin >> portNr;
+    }
+    else if (argc > 1)
+    {
+        portNr = atoi(argv[1]);
+    }
+
     //init
     asio::io_service ios;
-    asio::ip::tcp::endpoint endPoint(asio::ip::address::from_string("127.0.0.1"), 12730);
+    asio::ip::tcp::endpoint endPoint(asio::ip::address::from_string("127.0.0.1"), portNr);
     asio::ip::tcp::socket socket(ios, endPoint.protocol());
+    std::cout << "Connecting to 127.0.0.1:" << portNr << "\n";
     socket.connect(endPoint);
 
     jsonrpcpp::Parser parser;
@@ -50,14 +66,14 @@ int main()
     {
         std::string message;
         std::size_t numRead = read_(socket, message);
-        //std::cout << "Receiving Message:\n" << message << "\n\n";
+        std::cout << "Receiving Message:\n" << message << "\n\n";
 
         jsonrpcpp::entity_ptr ret = parser.parse(message);
         if (ret->is_response())
         {
             std::string responseMessage = std::dynamic_pointer_cast<jsonrpcpp::Response>(ret)->to_json().dump();
             write_(socket, responseMessage);
-            //std::cout << "Sending Message:\n" << responseMessage << "\n\n";
+            std::cout << "Sending Message:\n" << responseMessage << "\n\n";
         }
 
         // I counldn't get jsonrpcpp to parse the shutdown request with a null parameter so it crashes on parsing that,

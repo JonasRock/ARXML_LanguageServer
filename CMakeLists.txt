@@ -24,7 +24,8 @@ target_include_directories(ARXML_LanguageServer PUBLIC include/thirdparty)
 
 add_executable(test_ARXML
   src/test/testMain.cpp
-  src/test/tests.cpp
+  src/test/storageTest.cpp
+  src/test/parserTest.cpp
   src/xmlParser.cpp
   src/methods.cpp
   src/readWrite.cpp

@@ -123,3 +123,13 @@ uint32_t shortnameStorage::getOffsetFromPosition(const lsp::Position &pos)
 {
     return newlineOffsets[pos.line] + pos.character;
 }
+
+void shortnameStorage::addNewlineOffset(uint32_t offset)
+{
+    newlineOffsets.push_back(offset);
+}
+
+void shortnameStorage::reserveNewlines(const uint32_t numNewlines)
+{
+    newlineOffsets.reserve(numNewlines);
+}

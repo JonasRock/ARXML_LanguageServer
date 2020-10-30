@@ -125,7 +125,11 @@ public:
 
     lsp::Position getPositionFromOffset(const uint32_t offset);
     uint32_t getOffsetFromPosition(const lsp::Position &pos);
+    void addNewlineOffset(const uint32_t offset);
+    void reserveNewlines(const uint32_t numNewlines);
 
+    std::deque<referenceRange> references;
+    
     shortnameStorage()
         : shortnames(), references(),
           fullPathIndex{shortnames.get<fullPathIndex_t>()},
@@ -136,11 +140,10 @@ public:
      * @brief The container for all references
      * 
      */
-    std::deque<referenceRange> references;
-    std::vector<uint32_t> newlineOffsets;
     
 private:
     shortnameContainer_t shortnames;
+    std::vector<uint32_t> newlineOffsets;
     shortnameContainer_t::index<fullPathIndex_t>::type &fullPathIndex;
     shortnameContainer_t::index<offsetIndex_t>::type &offsetIndex;
     

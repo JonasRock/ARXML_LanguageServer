@@ -50,14 +50,14 @@ int main()
     {
         std::string message;
         std::size_t numRead = read_(socket, message);
-        std::cout << "Receiving Message:\n" << message << "\n\n";
+        //std::cout << "Receiving Message:\n" << message << "\n\n";
 
         jsonrpcpp::entity_ptr ret = parser.parse(message);
         if (ret->is_response())
         {
             std::string responseMessage = std::dynamic_pointer_cast<jsonrpcpp::Response>(ret)->to_json().dump();
             write_(socket, responseMessage);
-            std::cout << "Sending Message:\n" << responseMessage << "\n\n";
+            //std::cout << "Sending Message:\n" << responseMessage << "\n\n";
         }
 
         // I counldn't get jsonrpcpp to parse the shutdown request with a null parameter so it crashes on parsing that,

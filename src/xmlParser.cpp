@@ -199,15 +199,15 @@ void xmlParser::parseNewlines(iostreams::mapped_file &mmap, std::shared_ptr<shor
     {
         //First, go through once and count the number, so we can reserve enough space
         uint32_t numLines = std::count(start, end, '\n');
-        storage->newlineOffsets.reserve(numLines + 1);
-        storage->newlineOffsets.push_back(0);
+        storage->reserveNewlines(numLines + 1);
+        storage->addNewlineOffset(0);
 
         while(begin && begin < end)
         {
             begin = static_cast<const char*>(memchr(begin, '\n', end - begin));
             if (begin)
             {
-                storage->newlineOffsets.push_back(begin - start);
+                storage->addNewlineOffset(begin - start);
                 begin++;
             }
         }

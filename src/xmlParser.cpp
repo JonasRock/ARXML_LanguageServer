@@ -44,6 +44,7 @@ std::shared_ptr<shortnameStorage> xmlParser::parse(const lsp::DocumentUri uri)
     docString.replace(repBegin, 3, ":");
     std::string sanitizedDocString = docString.substr(repBegin-1);
 
+    //If there's already data for a given file URI, there's no need to parse it again, we can just reuse the data
     auto it = storages.find(sanitizedDocString);
     if (it != storages.end())
     {
@@ -58,32 +59,37 @@ std::shared_ptr<shortnameStorage> xmlParser::parse(const lsp::DocumentUri uri)
         parseNewlines(mmap, ret);
         auto t1 = std::chrono::high_resolution_clock::now();
         std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() << "ms - Newlines\n";
+
         auto t2 = std::chrono::high_resolution_clock::now();
         parseShortnames(mmap, ret);
         auto t3 = std::chrono::high_resolution_clock::now();
         std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << "ms - Shortnames\n";
+
         auto t4 = std::chrono::high_resolution_clock::now();
         parseReferences(mmap, ret);
         auto t5 = std::chrono::high_resolution_clock::now();
+        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t5-t4).count() << "ms - References\n";
 
         mmap.close();
-
-        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t5-t4).count() << "ms - References\n";
         return ret;
     }
-    
-    
 }
 
 /**
  * @brief second step of the parsing process is extracting all shortnames and their corresponding information
  * 
+ * This is by no means robust against malformed files, and doesn't comply to XML specification in any way,
+ * so in case of erronous files, expect this to return rubbish or even crash.
+ * Usually these files are generated anyways so they should be correct in most cases anyways and validating
+ * the file correctness would cost a significant chunk of performance.
+ * Also, the worst thing that can happen when this crashes is, that the extension does not work anymore, which it wouldn't
+ * for malformed files in any case
  */
 void xmlParser::parseShortnames(iostreams::mapped_file &mmap,std::shared_ptr<shortnameStorage> storage)
 {
-    const char* start = mmap.const_data();
-    const char* begin = start;
-    const char* const end = begin + mmap.size();
+    const char* const start = mmap.const_data();
+    const char* current = start;
+    const char* const end = current + mmap.size();
 
     uint32_t depth = 0;
 
@@ -91,25 +97,24 @@ void xmlParser::parseShortnames(iostreams::mapped_file &mmap,std::shared_ptr<sho
     //decide where in the tree to add the newest shortname when found
     std::vector<std::pair<std::uint32_t, std::string>> depths;
 
-    while( begin && begin < end)
+    while( current && current < end)
     {
-        
         //Go to the beginning of the next tag
-        begin = static_cast<const char*>(memchr(begin, '<', end - begin));
-        if(!begin)
+        current = static_cast<const char*>(memchr(current, '<', end - current));
+        if(!current)
         {
             break;
         }
-        ++begin;
+        ++current;
         
         //Check the tag
 
         //Closing tag
-        if ( *(begin) == '/' )
+        if ( *(current) == '/' )
         {
             --depth;
             //Skip to the end
-            begin = static_cast<const char*>(memchr(++begin, '>', end - begin)) + 1;
+            current = static_cast<const char*>(memchr(++current, '>', end - current)) + 1;
             if(!depths.empty())
             {
                 while ( depths.back().first > depth )
@@ -124,13 +129,13 @@ void xmlParser::parseShortnames(iostreams::mapped_file &mmap,std::shared_ptr<sho
         }
 
         //Shortname
-        else if ( !strncmp(begin, "SHORT-NAME>", 11) )
+        else if ( !strncmp(current, "SHORT-NAME>", 11) )
         {
-            //Skip to the end
-            begin += 11;
+            //Skip to the end of the <SHORT-NAME> tag, current is at the opening bracket
+            current += 11;
 
-            const char* endChar = static_cast<const char*>(memchr(begin, '<', end - begin)); //Find the closing tag
-            std::string shortnameString(begin, static_cast<uint32_t>(endChar-begin));
+            const char* endChar = static_cast<const char*>(memchr(current, '<', end - current)); //Find the closing tag
+            std::string shortnameString(current, static_cast<uint32_t>(endChar-current));
 
             //add the found shortname to the tree, according to the depths of the other components
             std::string pathString = "";
@@ -148,34 +153,36 @@ void xmlParser::parseShortnames(iostreams::mapped_file &mmap,std::shared_ptr<sho
             shortnameElement element;
             element.name = shortnameString;
             element.path = pathString;
-            element.fileOffset = begin - start; //This one is correct
+            element.fileOffset = current - start;
 
             storage->addShortname(element);
-            begin = endChar + 13;
+
+            //Skip the closing bracket
+            current = endChar + 13;
         }
 
         //XML Comment
-        else if ( *(begin) == '!' )
+        else if ( *(current) == '!' )
         {
             //Skip to the end
-            begin = strstr(++begin, "-->") + 3;
+            current = strstr(++current, "-->") + 3;
         }
 
         //XML Info
-        else if( *(begin) == '?' )
+        else if( *(current) == '?' )
         {
             //Skip to the end
-            begin = strstr(++begin, "?>") + 2;
+            current = strstr(++current, "?>") + 2;
         }
 
         //Normal XML Element
         else
         {
             //Skip to the end
-            begin = static_cast<const char*>(memchr(begin, '>', end - begin)) + 1;
+            current = static_cast<const char*>(memchr(current, '>', end - current)) + 1;
 
             //Check for empty elements that don't increase the depth
-            if ( *(begin - 2) != '/' )
+            if ( *(current - 2) != '/' )
             {
                 depth++;
             };
@@ -186,29 +193,30 @@ void xmlParser::parseShortnames(iostreams::mapped_file &mmap,std::shared_ptr<sho
 /**
  * @brief first step of the parsing process is to process all linebreaks as the format between lsp::Position and offset representation differs
  * 
+ * Newline locations are stored in an vector. This allows easy conversion from offsets to lineNr/offset pairs later on
  */
 void xmlParser::parseNewlines(iostreams::mapped_file &mmap, std::shared_ptr<shortnameStorage> storage)
 {
 
     const char* const start = mmap.const_data();
-    const char* begin = start;
-    const char* const end = begin + mmap.size();
+    const char* current = start;
+    const char* const end = current + mmap.size();
 
 
-    if (begin)
+    if (current)
     {
         //First, go through once and count the number, so we can reserve enough space
         uint32_t numLines = std::count(start, end, '\n');
         storage->reserveNewlines(numLines + 1);
         storage->addNewlineOffset(0);
 
-        while(begin && begin < end)
+        while(current && current < end)
         {
-            begin = static_cast<const char*>(memchr(begin, '\n', end - begin));
-            if (begin)
+            current = static_cast<const char*>(memchr(current, '\n', end - current));
+            if (current)
             {
-                storage->addNewlineOffset(begin - start);
-                begin++;
+                storage->addNewlineOffset(current - start);
+                current++;
             }
         }
     }
@@ -217,6 +225,8 @@ void xmlParser::parseNewlines(iostreams::mapped_file &mmap, std::shared_ptr<shor
 /**
  * @brief last step of the parsing process to find and link up the references to the parsed shortnames
  * 
+ * Not robust against malformed files or complying to XML standard again,
+ * malformed files will probably crash or at least just return rubbish
  */
 void xmlParser::parseReferences(iostreams::mapped_file &mmap, std::shared_ptr<shortnameStorage> storage)
 {
@@ -224,32 +234,36 @@ void xmlParser::parseReferences(iostreams::mapped_file &mmap, std::shared_ptr<sh
     std::boyer_moore_searcher searcher(searchPattern.begin(), searchPattern.end());
     auto it = mmap.const_begin();
     
-    const char* end = mmap.const_end();
-    const char* start = mmap.const_begin();
+    const char* const end = mmap.const_end();
+    const char* const start = mmap.const_begin();
 
     while(1)
     {
         it = std::search(it, end, searcher);
         if (it < end)
         {
+            //Go to the end of the REF tag
             it = static_cast<const char*>(memchr(it, '>', end - it));
             if(!it)
             {
                 break;
             }
-            it += 2; //Remove '/' at the front
+            it += 2; //Remove ">/" at the front
             const char* endOfReference = static_cast<const char*>(memchr(it, '<', end - it));
             std::string refString(it, static_cast<uint32_t>(endOfReference-it));
-            try{
+
+            //Try to find the shortname this points to by path and if found, link it up to the reference location and save that reference
+            try
+            {
                 shortnameElement target = storage->getByFullPath(refString);
                 referenceRange ref;
-                ref.targetOffsetRange = std::make_pair(target.fileOffset, static_cast<uint32_t>(target.fileOffset + target.name.size()) - 1); //This is correct
-                ref.refOffsetRange = std::make_pair(static_cast<uint32_t>(it - start - 1), static_cast<uint32_t>(endOfReference - start - 1)); //This is correct
+                ref.targetOffsetRange = std::make_pair(target.fileOffset, static_cast<uint32_t>(target.fileOffset + target.name.size()) - 1);
+                ref.refOffsetRange = std::make_pair(static_cast<uint32_t>(it - start - 1), static_cast<uint32_t>(endOfReference - start - 1));
                 storage->addReference(ref);
             }
             catch (lsp::elementNotFoundException &e)
             {
-                //no need to do anything, just ignore that reference
+                //It may be out of file or somewhere else, but since we can't link it up to anywhere in file, we just ignore it
             }
         }
         else

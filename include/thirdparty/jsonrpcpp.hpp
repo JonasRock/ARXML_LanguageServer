@@ -10,7 +10,7 @@
     Copyright (C) 2017-2020 Johannes Pohl
 
     This software may be modified and distributed under the terms
-    of the MIT license.  See the LICENSE file for details.
+    of the MIT license.  See the LICENSE_JSONRPCPP file for details.
 ***/
 
 /// http://patorjk.com/software/taag/#p=display&f=Graceful&t=JSONRPC%2B%2B

@@ -21,18 +21,9 @@
 #include "configurationGlobals.h"
 
 
-//TODO: parseNewlines
-//TODO: toCharOffset, fromCharOffset
-//TODO: parseReferences - maybe add the positions as a array to the tree
-//      the shortnames are sorted in the propertytree, so we can use this info to find
-//          the shortname for a given position relatively quickly
-
-//TODO: change size_t to unit32_t, should be plenty
-
 int main(int argc, char** argv)
 {
     int portNr;
-
     //Get the port from the command line
     if( argc == 1 )
     {
@@ -53,7 +44,6 @@ int main(int argc, char** argv)
     socket.connect(endPoint);
 
     jsonrpcpp::Parser parser;
-
     //Register the callbacks for the LPS messages
     parser.register_notification_callback("initialized", methods::notification_initialized);
     parser.register_notification_callback("exit", methods::notification_exit);

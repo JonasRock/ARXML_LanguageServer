@@ -31,6 +31,14 @@ std::size_t read_(asio::ip::tcp::socket &socket, std::string &message)
     }
 
     /////////////////////////// Header ///////////////////////////
+
+    //read_until() and read() are incompatible, as read_until can read over the delimiter, when calling consecutive
+    //read_until()s, it looks into the buffer first if the condition is already met, so it does not read from the socket in that case
+    //read does not look at the buffer, so it will probably miss a majority of the content, as that is in the buffer.
+    //for this reason, the streambuffer for the header is limited to 26 characters, 20 for the "Content-Lenght: " and "\r\n\r\n"
+    //and 6 characters for the number, as requests should not be bigger than 999999 characters anyways.
+    //This is necessary because the header is delimited by a string delimiter, while the body is delmitited by the provided length
+    //read_until() for the delimiter, read() for the fixed length
     asio::streambuf headerbuf(26);
     boost::system::error_code ec;
 
@@ -46,7 +54,8 @@ std::size_t read_(asio::ip::tcp::socket &socket, std::string &message)
 
     headerbuf.consume(headerLength);
 
-    //read_until can read over the delimiter, so that data is part of the content
+    //We didn't know how big the header was before, so we have probably had too much space in the streambuffer, some of the content might still be here
+    //We can extract that now and continue reading with read, since we know exactly how much read_until() read.
     std::istream headerStream(&headerbuf);
     std::string contentInHeader;
     headerStream >> contentInHeader;
@@ -65,11 +74,6 @@ std::size_t read_(asio::ip::tcp::socket &socket, std::string &message)
     };
 
     contentbuf.consume(contentLength);
-
-    // For debugging
-    // std::cout << "Read -- ContentSize according to Header: " << contentLength << "\n";
-    // std::cout << "Content -- Contentsize according to string.size(): " << message.size();
-    // std::cout<< message << "\n" << message << "\n";
 
     return headerLength + contentLength;
 }
@@ -90,9 +94,6 @@ std::size_t write_(asio::ip::tcp::socket &socket, const std::string &message)
     sendStream << lexical_cast<std::string>(message.length());
     sendStream << "\r\n\r\n";
     sendStream << message;
-
-    // For debugging
-    // std::cout << "Sent:\n" << sendStream.rdbuf() << "\n";
 
     size_t sentBytes = asio::write(socket, sendBuf);
     return sentBytes;

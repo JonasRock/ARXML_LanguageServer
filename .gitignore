@@ -6,5 +6,5 @@
 
 *.code-workspace
 build/
-docs/
+/docs/
 *.arxml

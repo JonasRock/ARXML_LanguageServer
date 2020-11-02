@@ -11,16 +11,23 @@
  * 
  */
 
-#include <map>
-#include <vector>
+#include <list>
 #include <cstdint>
 
 #include "boost/iostreams/device/mapped_file.hpp"
 
 #include "types.hpp"
 #include "shortnameStorage.hpp"
+#include "configurationGlobals.h"
 
 using namespace boost;
+
+struct storageElement
+{
+    std::string uri;
+    std::shared_ptr<shortnameStorage> storage;
+    uint32_t lastUsedID;
+};
 
 /**
  * @brief contains all functionality to parse shortnames and references
@@ -41,9 +48,7 @@ private:
     void parseReferences(iostreams::mapped_file &mmap, std::shared_ptr<shortnameStorage> storage);
     void parseNewlines(iostreams::mapped_file &mmap, std::shared_ptr<shortnameStorage> storage);
 
-    //This tree contains the shortname path structure,
-    //with the shortnames as keys and character offsets as values
-    std::map<std::string, std::shared_ptr<shortnameStorage>> storages;
+    std::list<storageElement> storages;
 };
 
 #endif /* XMLPARSER_H */

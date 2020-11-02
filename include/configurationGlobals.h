@@ -15,6 +15,7 @@
 
 namespace configurationGlobals
 {
+    const uint32_t maxOpenFiles = 5;
     extern bool receivedShutdownRequest;
     extern bool shutdownReady;
 }

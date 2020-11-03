@@ -27,4 +27,12 @@ namespace lsp
             return "Element to be inserted is malformed";
         }
     };
+
+    struct badEntityException : public std::exception
+    {
+        const char* what() const throw()
+        {
+            return "Could not parse JSON RPC entity";
+        }
+    };
 }

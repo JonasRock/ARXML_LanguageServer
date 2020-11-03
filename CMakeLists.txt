@@ -17,6 +17,7 @@ add_executable(ARXML_LanguageServer
   src/readWrite.cpp
   src/configurationGlobals.cpp
   src/shortnameStorage.cpp
+  src/lspParser.cpp
   ${BOOST_MAPPED_FILE_CPP_PATH}
 )
 target_include_directories(ARXML_LanguageServer PUBLIC include)
@@ -31,6 +32,7 @@ add_executable(test_ARXML
   src/readWrite.cpp
   src/configurationGlobals.cpp
   src/shortnameStorage.cpp
+  src/lspParser.cpp
   ${BOOST_MAPPED_FILE_CPP_PATH}
 )
 target_include_directories(test_ARXML PUBLIC include)

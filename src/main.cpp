@@ -13,13 +13,12 @@
 
 #include "boost/asio.hpp"
 #include "json.hpp"
-#include "jsonrpcpp.hpp"
+#include "lspParser.hpp"
 
 #include "readWrite.hpp"
 #include "methods.hpp"
 #include "xmlParser.hpp"
 #include "configurationGlobals.h"
-
 
 int main(int argc, char** argv)
 {
@@ -43,7 +42,8 @@ int main(int argc, char** argv)
     std::cout << "Connecting to 127.0.0.1:" << portNr << "\n";
     socket.connect(endPoint);
 
-    jsonrpcpp::Parser parser;
+    lspParser_ptr = std::make_shared<lsp::Parser>();
+
     //Register the callbacks for the LPS messages
     parser.register_notification_callback("initialized", methods::notification_initialized);
     parser.register_notification_callback("exit", methods::notification_exit);

@@ -41,6 +41,7 @@ public:
 
     lsp::LocationLink getDefinition(const lsp::TextDocumentPositionParams &posParams);
     std::vector<lsp::Location> getReferences(const lsp::ReferenceParams &posParams);
+    void preParseFile(const lsp::DocumentUri);
 
 private:
     std::shared_ptr<shortnameStorage> parse(const lsp::DocumentUri uri);

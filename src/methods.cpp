@@ -32,6 +32,7 @@ using namespace nlohmann;
             {"capabilities", {
                 {"referencesProvider", true},
                 {"definitionProvider", true},
+                {"colorProvider", true}
             }}
         };
         parser = std::make_shared<xmlParser>();
@@ -75,6 +76,13 @@ using namespace nlohmann;
             result = nullptr;
         }
 
+        return std::make_shared<jsonrpcpp::Response>(id, result);
+    }
+    jsonrpcpp::response_ptr methods::request_textDocument_documentColor(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+    {
+        lsp::DocumentColorParams p = params.to_json().get<lsp::DocumentColorParams>();
+        parser->preParseFile(p.textDocument.uri);
+        json result = json::array();
         return std::make_shared<jsonrpcpp::Response>(id, result);
     }
 

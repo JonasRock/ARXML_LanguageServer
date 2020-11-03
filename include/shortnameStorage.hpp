@@ -55,10 +55,8 @@ public:
  * 
  *  @brief only used as tags for the multi_index_container indices
  */
-
 struct fullPathIndex_t {};
 struct offsetIndex_t {};
-
 /// @endcond
 
 typedef multi_index_container<

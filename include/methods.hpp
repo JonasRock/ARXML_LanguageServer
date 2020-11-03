@@ -27,6 +27,8 @@ public:
     static jsonrpcpp::response_ptr request_shutdown(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_textDocument_references(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_textDocument_definition(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
+    //We only use documentColor to see when VSCode opens a file so we can begin parsing it without needing to wait for the user to request something first
+    static jsonrpcpp::response_ptr request_textDocument_documentColor(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static void notification_initialized(const jsonrpcpp::Parameter &params);
     static void notification_exit(const jsonrpcpp::Parameter &params);
 private:

@@ -405,3 +405,9 @@ std::vector<lsp::Location> xmlParser::getReferences(const lsp::ReferenceParams &
 
     
 }
+
+void xmlParser::preParseFile(const lsp::DocumentUri uri)
+{
+    parse(uri);
+    return;
+}

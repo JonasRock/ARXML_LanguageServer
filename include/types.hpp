@@ -76,5 +76,11 @@ namespace lsp
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ReferenceParams, textDocument, position, context)
 
+    struct DocumentColorParams
+    {
+        lsp::TextDocumentIdentifier textDocument;
+    };
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DocumentColorParams, textDocument)
+
 }
 #endif /* TYPES_H */

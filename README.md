@@ -41,9 +41,9 @@ This can currently only open the file in readonly mode.
 
 ### No definition found error ###
 
-ARXML files may be split up into multiple files.
+ARXML files may be split up into multiple files. Currently only file-local references are supported.
 
-Currently only file-local references are supported.
+The reference path might lie inside of an SD GID element. These are not parsed currently.
 
 ------------------------
 

@@ -57,6 +57,8 @@ jsonrpcpp::entity_ptr lsp::Parser::parse(const std::string &json_str)
             response_callback callback = response_callbacks_[response->id().int_id()];
             if (callback)
             {
+                //Remove the callback for this id
+                response_callbacks_.erase(response->id().int_id());
                 callback(response->result());
                 return nullptr;
             }

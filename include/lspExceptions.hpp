@@ -8,6 +8,9 @@
  * 
  */
 
+#ifndef LSPEXCEPTIONS_H
+#define LSPEXCEPTIONS_H
+
 #include <exception>
 
 namespace lsp
@@ -36,3 +39,5 @@ namespace lsp
         }
     };
 }
+
+#endif /* LSPEXCEPTIONS_H */

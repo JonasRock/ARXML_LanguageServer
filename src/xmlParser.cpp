@@ -1,13 +1,3 @@
-/**
- * @file xmlParser.cpp
- * @author Jonas Rock
- * @brief implementation of arxml file parsing
- * @version 0.1
- * @date 2020-10-27
- * 
- * 
- */
-
 #include <string>
 #include <iostream>
 #include <chrono>
@@ -20,7 +10,7 @@
 #include "xmlParser.hpp"
 #include "shortnameStorage.hpp"
 #include "lspExceptions.hpp"
-#include "configurationGlobals.h"
+#include "config.hpp"
 
 using namespace boost;
 
@@ -48,67 +38,58 @@ std::shared_ptr<shortnameStorage> xmlParser::parse(const lsp::DocumentUri uri)
 
     //If there's already data for a given file URI, there's no need to parse it again, we can just reuse the data
     std::shared_ptr<storageElement> storageElem = nullptr;
-    for(auto &temp : storages)
+    for(auto temp = storages.begin(); temp != storages.end(); temp++)
     {
-        if(temp.uri == sanitizedDocString)
+        if((*temp).uri == sanitizedDocString)
         {
-            storageElem = std::make_shared<storageElement>(temp);
-            break;
+            temp->lastUsedID = currentID++;
+            return temp->storage;
         }
     }
 
-    //Already data present
-    if (storageElem != nullptr)
+    //Too many open files at once
+    if(storages.size() >= lsp::config::maxOpenFiles)
     {
-        storageElem->lastUsedID = currentID++;
-        return storageElem->storage;
-    }
-    //Needs to be parsed
-    else
-    {
-        //Too many open files at once
-        if(storages.size() >= configurationGlobals::maxOpenFiles)
+        //Throw out the oldest storage
+        uint32_t lowest = ~0;
+        std::list<storageElement>::iterator oldest;
+        for(auto it = storages.begin(); it != storages.end(); it++)
         {
-            //Throw out the oldest storage
-            uint32_t lowest = ~0;
-            std::list<storageElement>::iterator oldest;
-            for(auto it = storages.begin(); it != storages.end(); it++)
+            if(it->lastUsedID < lowest)
             {
-                if(it->lastUsedID < lowest)
-                {
-                    oldest = it;
-                    lowest = it->lastUsedID;
-                }
+                oldest = it;
+                lowest = it->lastUsedID;
             }
-            std::cout << "Closing: " << oldest->uri << "\n";
-            storages.erase(oldest);
         }
-        storageElement newStorage;
-        newStorage.lastUsedID = currentID++;
-        newStorage.uri = sanitizedDocString;
-        newStorage.storage = std::make_shared<shortnameStorage>();
-
-        storages.push_back(newStorage);
-        iostreams::mapped_file mmap(sanitizedDocString, iostreams::mapped_file::readonly);
-
-        auto t0 = std::chrono::high_resolution_clock::now();
-        parseNewlines(mmap, newStorage.storage);
-        auto t1 = std::chrono::high_resolution_clock::now();
-        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() << "ms - Newlines\n";
-
-        auto t2 = std::chrono::high_resolution_clock::now();
-        parseShortnames(mmap, newStorage.storage);
-        auto t3 = std::chrono::high_resolution_clock::now();
-        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << "ms - Shortnames\n";
-
-        auto t4 = std::chrono::high_resolution_clock::now();
-        parseReferences(mmap, newStorage.storage);
-        auto t5 = std::chrono::high_resolution_clock::now();
-        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t5-t4).count() << "ms - References\n";
-
-        mmap.close();
-        return newStorage.storage;
+        std::cout << "Closing: " << oldest->uri << "\n";
+        storages.erase(oldest);
     }
+    storageElement newStorage;
+    newStorage.lastUsedID = currentID++;
+    newStorage.uri = sanitizedDocString;
+    newStorage.storage = std::make_shared<shortnameStorage>();
+
+    storages.push_back(newStorage);
+    iostreams::mapped_file mmap(sanitizedDocString, iostreams::mapped_file::readonly);
+
+    std::cout << "Parsing " << uri << "\n";
+    auto t0 = std::chrono::high_resolution_clock::now();
+    parseNewlines(mmap, newStorage.storage);
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() << "ms - Newlines\n";
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    parseShortnames(mmap, newStorage.storage);
+    auto t3 = std::chrono::high_resolution_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << "ms - Shortnames\n";
+
+    auto t4 = std::chrono::high_resolution_clock::now();
+    parseReferences(mmap, newStorage.storage);
+    auto t5 = std::chrono::high_resolution_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t5-t4).count() << "ms - References\n\n";
+
+    mmap.close();
+    return newStorage.storage;
 }
 
 /**

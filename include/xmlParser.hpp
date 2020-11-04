@@ -1,16 +1,6 @@
 #ifndef XMLPARSER_H
 #define XMLPARSER_H
 
-/**
- * @file xmlParser.hpp
- * @author Jonas rock
- * @brief contains the xmlParser used to process arxml files
- * @version 0.1
- * @date 2020-10-27
- * 
- * 
- */
-
 #include <list>
 #include <cstdint>
 
@@ -18,7 +8,6 @@
 
 #include "types.hpp"
 #include "shortnameStorage.hpp"
-#include "configurationGlobals.h"
 
 using namespace boost;
 

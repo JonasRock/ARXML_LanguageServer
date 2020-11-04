@@ -13,10 +13,11 @@ namespace lsp
 {
 
 
-typedef std::function<void(const json &results)> response_callback;
 
 class Parser: public jsonrpcpp::Parser
 {
+typedef std::function<void(const json &results)> response_callback;
+
 public:
     jsonrpcpp::entity_ptr parse(const std::string &json_str);
     void register_response_callback(const uint32_t id, response_callback callback);

@@ -82,5 +82,16 @@ namespace lsp
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DocumentColorParams, textDocument)
 
+    struct ConfigurationItem
+    {
+        std::string section;
+    };
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConfigurationItem, section)
+
+    struct ConfigurationParams
+    {
+        std::vector<ConfigurationItem> items;
+    };
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConfigurationParams, items)
 }
 #endif /* TYPES_H */

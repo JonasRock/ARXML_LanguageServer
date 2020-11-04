@@ -14,18 +14,51 @@
 #include "boost/asio.hpp"
 #include "boost/lexical_cast.hpp"
 
+#include "ioHandler.hpp"
+
 using namespace boost;
 
-/**
- * @brief read from socket and remove protocol header (blocking/synchronous)
- * 
- * @param socket 
- * @param message string to write result to
- * @return std::size_t number of read bytes, including header
- */
-std::size_t read_(asio::ip::tcp::socket &socket, std::string &message)
+lsp::IOHandler::IOHandler(const std::string &address, uint32_t port)
+    : ioc_(), endpoint_(asio::ip::address::from_string(address), port), socket_(ioc_, endpoint_.protocol())
 {
-    while(socket.available() < 26)
+    std::cout << "Connecting to " << address << ":" << port << "...\n";
+    socket_.connect(endpoint_);
+    std::cout << "Connection established\n";
+}
+
+void lsp::IOHandler::addMessageToSend(const std::string &message)
+{
+    sendStack_.emplace(message);
+}
+
+std::string lsp::IOHandler::readNextMessage()
+{
+    std::string ret;
+    if (read_(ret))
+    {
+        std::cout << "Receiving Message:\n" << ret << "\n\n";
+        return ret;
+    }
+    else
+    {
+        return "";
+    }
+}
+
+void lsp::IOHandler::writeAllMessages()
+{
+    while(!sendStack_.empty())
+    {
+        std::string toSend = sendStack_.top();
+        sendStack_.pop();
+        write_(toSend);
+        std::cout << "Sending Message:\n" << toSend << "\n\n";
+    }
+}
+
+std::size_t lsp::IOHandler::read_(std::string &message)
+{
+    while(socket_.available() < 26)
     {
         // busy waiting
     }
@@ -42,7 +75,7 @@ std::size_t read_(asio::ip::tcp::socket &socket, std::string &message)
     asio::streambuf headerbuf(26);
     boost::system::error_code ec;
 
-    std::size_t headerLength = asio::read_until(socket, headerbuf, "\r\n\r\n", ec);
+    std::size_t headerLength = asio::read_until(socket_, headerbuf, "\r\n\r\n", ec);
     if (ec) { std::cerr << ec.message() << std::endl; }
 
     size_t contentLength = lexical_cast<size_t>(std::string{
@@ -64,7 +97,7 @@ std::size_t read_(asio::ip::tcp::socket &socket, std::string &message)
     asio::streambuf contentbuf(contentLength - contentInHeader.size());
 
     //read the rest
-    asio::read(socket, contentbuf, asio::transfer_exactly(contentLength - contentInHeader.size()), ec);
+    asio::read(socket_, contentbuf, asio::transfer_exactly(contentLength - contentInHeader.size()), ec);
     if (ec) { std::cerr << ec.message() << std::endl;} 
 
     message.reserve(contentLength);
@@ -78,14 +111,7 @@ std::size_t read_(asio::ip::tcp::socket &socket, std::string &message)
     return headerLength + contentLength;
 }
 
-/**
- * @brief generate protocol header and send to socket (blocking/synchronous)
- * 
- * @param socket 
- * @param message string to send
- * @return std::size_t number of bytes sent, including header
- */
-std::size_t write_(asio::ip::tcp::socket &socket, const std::string &message)
+std::size_t lsp::IOHandler::write_(const std::string &message)
 {
     asio::streambuf sendBuf;
     std::ostream sendStream(&sendBuf);
@@ -95,6 +121,6 @@ std::size_t write_(asio::ip::tcp::socket &socket, const std::string &message)
     sendStream << "\r\n\r\n";
     sendStream << message;
 
-    size_t sentBytes = asio::write(socket, sendBuf);
+    size_t sentBytes = asio::write(socket_, sendBuf);
     return sentBytes;
 }

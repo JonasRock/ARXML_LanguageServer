@@ -1,19 +1,9 @@
 #ifndef SHORTNAMESTORAGE_H
 #define SHORTNAMESTORAGE_H
 
-/**
- * @file shortnameStorage.hpp
- * @author Jonas Rock
- * @brief contains the data structures for storage of parsed data
- * @version 0.1
- * @date 2020-10-27
- * 
- * 
- */
-
 #include <string>
-#include <cstdint>
 #include <deque>
+
 #include "boost/multi_index_container.hpp"
 #include "boost/multi_index/ordered_index.hpp"
 #include "boost/multi_index/mem_fun.hpp"

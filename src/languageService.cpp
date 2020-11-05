@@ -30,16 +30,23 @@ void lsp::LanguageService::run()
 {
     while(1)
     {
-        std::string message = ioHandler_->readNextMessage();
-        jsonrpcpp::entity_ptr ret = lspParser_->parse(message);
-        if(ret)
+        try
         {
-            if(ret->is_response())
+            std::string message = ioHandler_->readNextMessage();
+            jsonrpcpp::entity_ptr ret = lspParser_->parse(message);
+            if(ret)
             {
-                ioHandler_->addMessageToSend(std::dynamic_pointer_cast<jsonrpcpp::Response>(ret)->to_json().dump());
+                if(ret->is_response())
+                {
+                    ioHandler_->addMessageToSend(std::dynamic_pointer_cast<jsonrpcpp::Response>(ret)->to_json().dump());
+                }
             }
+            ioHandler_->writeAllMessages();
         }
-        ioHandler_->writeAllMessages();
+        catch (lsp::badEntityException &e)
+        {
+
+        }
     }
 }
 

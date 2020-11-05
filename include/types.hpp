@@ -13,16 +13,8 @@
 
 namespace lsp
 {
-    /**
-     * @brief LSP data type
-     * 
-     */
     typedef std::string DocumentUri;
 
-    /**
-     * @brief LSP data type
-     * 
-     */
     struct Position
     {
         uint32_t line;
@@ -30,10 +22,6 @@ namespace lsp
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Position, line, character)
 
-    /**
-     * @brief LSP data type
-     * 
-     */
     struct Range
     {
         lsp::Position start;
@@ -41,10 +29,6 @@ namespace lsp
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Range, start, end)
 
-    /**
-     * @brief LSP data type
-     * 
-     */
     struct Location
     {
         lsp::DocumentUri uri;
@@ -52,10 +36,6 @@ namespace lsp
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Location, uri, range)
 
-    /**
-     * @brief LSP data type
-     * 
-     */
     struct LocationLink
     {
         lsp::Range originSelectionRange;
@@ -65,20 +45,12 @@ namespace lsp
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LocationLink, originSelectionRange, targetUri, targetRange, targetSelectionRange)
 
-    /**
-     * @brief LSP data type
-     * 
-     */
     struct TextDocumentIdentifier
     {
         lsp::DocumentUri uri;
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextDocumentIdentifier, uri)
 
-    /**
-     * @brief LSP data type
-     * 
-     */
     struct TextDocumentPositionParams
     {
         lsp::TextDocumentIdentifier textDocument;
@@ -86,20 +58,12 @@ namespace lsp
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextDocumentPositionParams, textDocument, position)
 
-    /**
-     * @brief LSP data type
-     * 
-     */
     struct ReferenceContext
     {
         bool includeDeclaration;
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ReferenceContext, includeDeclaration)
 
-    /**
-     * @brief LSP data type
-     * 
-     */
     struct ReferenceParams
     {
         lsp::TextDocumentIdentifier textDocument;
@@ -108,30 +72,18 @@ namespace lsp
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ReferenceParams, textDocument, position, context)
 
-    /**
-     * @brief LSP data type
-     * 
-     */
     struct DocumentColorParams
     {
         lsp::TextDocumentIdentifier textDocument;
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DocumentColorParams, textDocument)
 
-    /**
-     * @brief LSP data type
-     * 
-     */
     struct ConfigurationItem
     {
         std::string section;
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConfigurationItem, section)
 
-    /**
-     * @brief LSP data type
-     * 
-     */
     struct ConfigurationParams
     {
         std::vector<ConfigurationItem> items;

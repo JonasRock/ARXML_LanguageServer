@@ -15,10 +15,6 @@
 
 namespace lsp
 {
-    /**
-     * @brief Cannot find requested element in shortnameStorage
-     * 
-     */
     struct elementNotFoundException : public std::exception
     {
         const char* what() const throw()
@@ -27,10 +23,6 @@ namespace lsp
         }
     };
 
-    /**
-     * @brief Element to be inserted into shortnameStorage is malformed
-     * 
-     */
     struct malformedElementInsertionException : public std::exception
     {
         const char* what() const throw()
@@ -39,10 +31,6 @@ namespace lsp
         }
     };
 
-    /**
-     * @brief Message is not correct or not registered
-     * 
-     */
     struct badEntityException : public std::exception
     {
         const char* what() const throw()

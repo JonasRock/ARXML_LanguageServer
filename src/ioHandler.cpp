@@ -48,7 +48,7 @@ void lsp::IOHandler::writeAllMessages()
 
 std::size_t lsp::IOHandler::read_(std::string &message)
 {
-    while(socket_.available() < 26)
+    while(socket_.available() < 30)
     {
         // busy waiting
     }
@@ -58,11 +58,11 @@ std::size_t lsp::IOHandler::read_(std::string &message)
     //read_until() and read() are incompatible, as read_until can read over the delimiter, when calling consecutive
     //read_until()s, it looks into the buffer first if the condition is already met, so it does not read from the socket in that case
     //read does not look at the buffer, so it will probably miss a majority of the content, as that is in the buffer.
-    //for this reason, the streambuffer for the header is limited to 26 characters, 20 for the "Content-Lenght: " and "\r\n\r\n"
-    //and 6 characters for the number, as requests should not be bigger than 999999 characters anyways.
+    //for this reason, the streambuffer for the header is limited to 30 characters, 20 for the "Content-Lenght: " and "\r\n\r\n"
+    //and 10 characters for the number, as requests should not be bigger than that anyways.
     //This is necessary because the header is delimited by a string delimiter, while the body is delmitited by the provided length
     //read_until() for the delimiter, read() for the fixed length
-    asio::streambuf headerbuf(26);
+    asio::streambuf headerbuf(30);
     boost::system::error_code ec;
 
     std::size_t headerLength = asio::read_until(socket_, headerbuf, "\r\n\r\n", ec);

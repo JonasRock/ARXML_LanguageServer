@@ -1,14 +1,3 @@
-/**
- * @file shortnameStorage.cpp
- * @author Jonas rock
- * @brief implementation of shortnameStorage
- * @version 0.1
- * @date 2020-10-27
- * 
- * @copyright Copyright (c) 2020
- * 
- */
-
 #include <algorithm>
 #include <optional>
 

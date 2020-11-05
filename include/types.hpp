@@ -1,16 +1,6 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-/**
- * @file types.hpp
- * @author Jonas Rock
- * @brief contains the structs and json macros for easier use
- * @version 0.1
- * @date 2020-10-27
- * 
- * 
- */
-
 #include "json.hpp"
 
 //Contains the Structures defined by the Language Server Protocol as C++ Structs for easier handling

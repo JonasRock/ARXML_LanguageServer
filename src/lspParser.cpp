@@ -31,8 +31,8 @@ jsonrpcpp::entity_ptr lsp::Parser::parse(const std::string &json_str)
             if (callback)
             {
                 callback(notification->params());
-                return nullptr;
             }
+            return nullptr;
         }
     }
     else if (entity && entity->is_request())
@@ -47,6 +47,12 @@ jsonrpcpp::entity_ptr lsp::Parser::parse(const std::string &json_str)
                 if (response)
                     return response;
             }
+            else
+            {
+                jsonrpcpp::Error err("MethodNotFound", -32601);
+                jsonrpcpp::Response(request->id(), err);
+            }
+            
         }
     }
     else if (entity && entity->is_response())

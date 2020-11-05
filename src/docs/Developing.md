@@ -42,7 +42,7 @@ If errors occur, make sure to select the build target "ARXML_LanguageServer".
 
 ## How to run / debug ##
 
-The server itself does pretty much nothing on its own. It tries to connect to the socket 127.0.0.1 at a given port and closes if it can't connect.
+The server itself does pretty much nothing on its own. It tries to connect to 127.0.0.1 at a given port and closes if it can't connect.
 The server is supposed to connect to an editor extension client implementing the [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) and responds to the extensions requests.
 
 An editor extension client for Visual Studio code is available [here](https://github.com/JonasRock/ARXML_NavigationHelper), but it should work too with other Editors if the have Language Server Protocol support, but might require a change of transport for the protocol.
@@ -52,23 +52,29 @@ This allows us to run the server ourselves with a debugger.
 To configure the client to wait for an exteral process is currently only possible through commenting out
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-extension.ts::createServerWithSocket():
+extension.ts: createServerWithSocket():
 
 exec = child_process.spawn(executablePath)
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 in the clients extension.ts file
 
-Now we can start a visual studio instance with the extension enabled, open a ARXML file and then start the server to connect to the extension.
+Now we can start a VSCode instance with the extension enabled (F5), open a ARXML file (so the extension starts) and then start the server to connect to the extension.
 In the Debug Log of the VSCode instance thats owning the Extension Development Host (The one you started the extension with) should now log what port number it will listen to. Either provide the number as an argument to the server or enter it manually after starting.
-
-Note: Running or debugging the server using F5 does not work for me, but the buttons on the bottom row do.
 
 -----------------
 
 ## Structure / Architecture ##
 
 The following sections describe how the server functions internally and are thus only important when wanting to make changes to the server itself.
+
+### Structure ###
+
+- lsp::IOHandler: Manages the connection to the socket, as well as reading and writing
+- lsp::LanguageService: Contains main routine and all callbacks
+- lsp::Parser: Manages parsing of messages and management of corresponding callbacks
+- xmlParser: Handles processing of arxml files and provides file information
+- shortnameStorage: Data structure used for holding parsed arxml data
 
 ### Startup ###
 
@@ -79,22 +85,22 @@ After an acknowledgement notification from the client the server is fully functi
 
 ### Request Handling ###
 
-The server waits until a message is sent to it, parses the message, calculates the response and sends it back. This loop is synchronous, the server can only process the next message after the response to the first one is sent back.
+The server waits until a message is sent to it, parses the message, calculates the response(s) and sends it(them) back. This loop is synchronous, the server can only process the next message after the response to the first one is sent back.
 
-For every request/notification we can receive based on our initialization, we register a callback function in main() to the JSON-RPC parser that handles the requests.
+For every request/notification we can receive based on our initialization, we register a callback function in the languageService that handles the requests.
 
-The parser provides the arguments for the request to the callback, that processes the request, formulates a result and passes it back to the parser, that serializes it and passes it back to the main to be sent back out to the client via socket.
+The lspParser provides the arguments for the request to the callback, that processes the request, formulates a result and passes it back to the parser, that serializes it and passes it back to the main to be sent back out to the client via socket.
 
 The data flow can be visualized as such:
 ~~~~~~~~~~~~~~~~
 Request:
 
-readocket -> JSON-RPC-Parser -> callback -> xmlParser -> shortnameStorage
+IOHandler -> LanguageService -> LspParser -> callback -> xmlParser -> shortnameStorage
 ~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~
 Response:
 
-writeSocket <- JSON-RPC-Parser <- callback <- xmlParser <- shortnameStorage
+IOHandler <- LanguageService <- LspParser <- callback <- xmlParser <- shortnameStorage
 ~~~~~~~~~~~~~~~~
 
 ### Parsing the ARXML file ###
@@ -112,10 +118,10 @@ The callbacks get their results from the parser.
 
 To add other features of the Language Server Protocol, multiple steps are required:
 
-1. Register the functionality in the methods::request_initialise() function according to the [Language Server Protocol Specification](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#initialize)\n
+1. Register the functionality in the lsp::LanguageService::request_initialise() function according to the [Language Server Protocol Specification](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#initialize)\n
 For example, to add hovertext to the server add the hoverProvider like this:
 ~~~~~~~~~~~~~~~~~~~~~~~
-methods.cpp:methods::request_initialize():
+languageService.cpp: lsp::LanguageService::request_initialize():
 
 json result = {
     {"capabilities", {
@@ -126,13 +132,13 @@ json result = {
 };
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-2. Create the corresponding callback():\n
-Don't forget to add the prototpye to methods.hpp\n
+2. Create the corresponding callback:\n
+Don't forget to add the prototpye to languageService.hpp\n
 The Response json object must be formatted according to LSP specification
 ~~~~~~~~~~~~~~~~~~~~~~~
-methods.cpp:
+langugaeService.cpp: lsp::LanguageService:
 
-jsonrpcpp::response_ptr methods::request_textDocument_hover(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_hover(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
     json respone = nullptr;
     // call xmlParser for info from here
@@ -143,17 +149,17 @@ jsonrpcpp::response_ptr methods::request_textDocument_hover(const jsonrpcpp::Id 
 
 3. If needed, extend the xmlParser
 
-4. register your callback in main():
+4. register your callback in lsp::LanguageService::start():
 ~~~~~~~~~~~~~~~~~~~~~~~
-main.cpp:main():
+languageService.cpp: lsp::LanguageService::start():
 
-parser.register_request_callback("textDocument/hover", methods::request_textDocument_hover);
+parser.register_request_callback("textDocument/hover", request_textDocument_hover);
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 To make your life easier, you can declare the json interfaces from the LSP specification as structs int types.hpp and add the macro like for the others.
 This enables you to just assign a json object with a struct and the other way around, so you can work with cpp data structures and convert it to json for the return value. For example:
 ~~~~~~~~~~~~~~~~~~~~~~~
-types.hpp::lsp:
+types.hpp: lsp:
 
 struct Position
 {

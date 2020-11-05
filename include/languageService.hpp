@@ -1,3 +1,11 @@
+/**
+ * @file languageService.hpp
+ * @author Jonas Rock
+ * @brief Main run routine, callback definitions for lsp methods
+ * @version 0.1
+ * @date 2020-11-05
+ */
+
 #ifndef LANGUAGESERVICE_H
 #define LANGUAGESERVICE_H
 
@@ -15,10 +23,19 @@
 namespace lsp
 {
 
-
+/**
+ * @brief Main run routine, callback definitions for lsp methods
+ * 
+ */
 class LanguageService
 {
 public:
+    /**
+     * @brief start connection, register callbacks and instantiate parsers and IOHandler, then begin main run routine
+     * 
+     * @param address Address to connect to without port suffix, e.g. "127.0.0.1"
+     * @param port Port to use for the connectio
+     */
     static void start(std::string address, uint32_t port);
 private:
     static void run();

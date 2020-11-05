@@ -1,3 +1,11 @@
+/**
+ * @file shortnameStorage.hpp
+ * @author Jonas Rock
+ * @brief Data structure for the parsed arxml data
+ * @version 0.1
+ * @date 2020-11-05
+ */
+
 #ifndef SHORTNAMESTORAGE_H
 #define SHORTNAMESTORAGE_H
 
@@ -13,6 +21,10 @@
 
 using namespace boost;
 
+/**
+ * @brief Represents link ranges for a reference
+ * 
+ */
 struct referenceRange
 {
     std::pair<uint32_t, uint32_t> refOffsetRange;
@@ -21,23 +33,42 @@ struct referenceRange
 
 
 /**
- * @brief contains all important info for a given shortname
+ * @brief Represents a shortname element with all its required info
  * 
  */
 class shortnameElement
 {
 public:
-    //the stringpath through the shortname hierarchy, without leading or trailing '/'
+    /**
+     * @brief The path to the element through the shortname tree. Without leading or trailing '/'
+     * 
+     */
     std::string path;
-    //the shortname string itself
+
+    /**
+     * @brief Shortname itself
+     * 
+     */
     std::string name;
-    //the offset in the file to the first character of the shortname
+
+    /**
+     * @brief Char offset from file start of first character of the shortname
+     * 
+     */
     uint32_t fileOffset;
 
-    //Returns the start and end offsets of the shortname, both inclusive, so the second value is still part of the name
+    /**
+     * @brief Returns the char offsets from file start to first and last char of the shortname
+     * 
+     * @return const std::pair<uint32_t, uint32_t> first is start, second is end
+     */
     const std::pair<uint32_t, uint32_t> getOffsetRange() const;
 
-    //Returns the full path of the shortname including itself
+    /**
+     * @brief Returns the full path including the shortname itself e.g. "path/name" without leading or trailing '/'
+     * 
+     * @return std::string 
+     */
     std::string getFullPath () const;
 };
 
@@ -64,7 +95,7 @@ typedef multi_index_container<
     > shortnameContainer_t;
 
 /**
- * @brief class that managaes the parsed reference and shortname data
+ * @brief Data structure for the parsed arxml data
  * 
  */
 class shortnameStorage
@@ -111,23 +142,45 @@ public:
      */
     const referenceRange &getReferenceByOffset(const uint32_t searchOffset) const;
 
+    /**
+     * @brief Convert from char offset to lineNr/charNr position
+     * 
+     * @param offset Char offset from file start
+     * @return lsp::Position position in lineNr/charNr representation
+     */
     lsp::Position getPositionFromOffset(const uint32_t offset);
+
+    /**
+     * @brief Convert from lineNr/charNr to char offset
+     * 
+     * @param pos Position in lineNr/charNr representation
+     * @return uint32_t Char offset from file start
+     */
     uint32_t getOffsetFromPosition(const lsp::Position &pos);
+
+    /** @cond
+     * 
+     *  @brief only used during parsing
+     */
     void addNewlineOffset(const uint32_t offset);
     void reserveNewlines(const uint32_t numNewlines);
+    /// @endcond
 
+    /**
+     * @brief Contains all found references
+     * 
+     */
     std::deque<referenceRange> references;
     
+    /**
+     * @brief Construct a new shortname Storage object
+     * 
+     */
     shortnameStorage()
         : shortnames(), references(),
           fullPathIndex{shortnames.get<fullPathIndex_t>()},
           offsetIndex{shortnames.get<offsetIndex_t>()}
     {}
-
-    /**
-     * @brief The container for all references
-     * 
-     */
     
 private:
     shortnameContainer_t shortnames;

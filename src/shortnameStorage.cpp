@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <optional>
 
 #include "shortnameStorage.hpp"
 #include "lspExceptions.hpp"

@@ -4,8 +4,6 @@
  * @brief Custom exceptions
  * @version 0.1
  * @date 2020-10-27
- * 
- * 
  */
 
 #ifndef LSPEXCEPTIONS_H

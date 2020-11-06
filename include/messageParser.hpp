@@ -9,7 +9,6 @@
 #ifndef LSPPARSER_H
 #define LSPPARSER_H
 
-#include <functional>
 #include <map>
 
 #include "json.hpp"

@@ -10,7 +10,6 @@
 #define XMLPARSER_H
 
 #include <list>
-#include <cstdint>
 
 #include "boost/iostreams/device/mapped_file.hpp"
 

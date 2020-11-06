@@ -1,4 +1,4 @@
-#include "MessageParser.hpp"
+#include "messageParser.hpp"
 #include "lspExceptions.hpp"
 
 void lsp::MessageParser::register_response_callback(const uint32_t id, response_callback callback)

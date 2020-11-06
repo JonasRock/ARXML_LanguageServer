@@ -2,8 +2,6 @@
 #include <iostream>
 #include <chrono>
 #include <utility>
-#include <algorithm>
-#include <cstdint>
 
 #include "boost/iostreams/device/mapped_file.hpp"
 

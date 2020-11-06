@@ -1,9 +1,10 @@
+#include "languageService.hpp"
+
 #include <string>
 #include <iostream>
 
 #include "types.hpp"
 #include "lspExceptions.hpp"
-#include "languageService.hpp"
 #include "config.hpp"
 
 void lsp::LanguageService::start(std::string address, uint32_t port)

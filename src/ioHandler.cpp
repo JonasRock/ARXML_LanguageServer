@@ -1,10 +1,10 @@
+#include "ioHandler.hpp"
+
 #include <iostream>
 #include <string>
 
 #include "boost/asio.hpp"
 #include "boost/lexical_cast.hpp"
-
-#include "ioHandler.hpp"
 
 using namespace boost;
 

@@ -1,6 +1,4 @@
 #include <iostream>
-#include <string>
-#include <stack>
 
 #include "boost/asio.hpp"
 

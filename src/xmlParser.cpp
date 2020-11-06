@@ -14,21 +14,13 @@
 
 using namespace boost;
 
-xmlParser::xmlParser()
-{
-}
-
-xmlParser::~xmlParser()
-{
-}
-
 /**
  * @brief If not yet parsed, parses the document and returns the storage of the parsed data
  * 
  * @param uri Document to be parsed
  * @return std::shared_ptr<shortnameStorage> the parsed data
  */
-std::shared_ptr<shortnameStorage> xmlParser::parse(const lsp::DocumentUri uri)
+std::shared_ptr<lsp::ShortnameStorage> lsp::XmlParser::parse(const lsp::types::DocumentUri uri)
 {
     static uint32_t currentID = 0;
     std::string docString = std::string(uri.begin() + 5, uri.end());
@@ -37,7 +29,7 @@ std::shared_ptr<shortnameStorage> xmlParser::parse(const lsp::DocumentUri uri)
     std::string sanitizedDocString = docString.substr(repBegin-1);
 
     //If there's already data for a given file URI, there's no need to parse it again, we can just reuse the data
-    std::shared_ptr<storageElement> storageElem = nullptr;
+    std::shared_ptr<StorageElement> storageElem = nullptr;
     for(auto temp = storages.begin(); temp != storages.end(); temp++)
     {
         if((*temp).uri == sanitizedDocString)
@@ -52,7 +44,7 @@ std::shared_ptr<shortnameStorage> xmlParser::parse(const lsp::DocumentUri uri)
     {
         //Throw out the oldest storage
         uint32_t lowest = ~0;
-        std::list<storageElement>::iterator oldest;
+        std::list<StorageElement>::iterator oldest;
         for(auto it = storages.begin(); it != storages.end(); it++)
         {
             if(it->lastUsedID < lowest)
@@ -64,10 +56,10 @@ std::shared_ptr<shortnameStorage> xmlParser::parse(const lsp::DocumentUri uri)
         std::cout << "Closing: " << oldest->uri << "\n";
         storages.erase(oldest);
     }
-    storageElement newStorage;
+    StorageElement newStorage;
     newStorage.lastUsedID = currentID++;
     newStorage.uri = sanitizedDocString;
-    newStorage.storage = std::make_shared<shortnameStorage>();
+    newStorage.storage = std::make_shared<ShortnameStorage>();
 
     storages.push_back(newStorage);
     iostreams::mapped_file mmap(sanitizedDocString, iostreams::mapped_file::readonly);
@@ -102,7 +94,7 @@ std::shared_ptr<shortnameStorage> xmlParser::parse(const lsp::DocumentUri uri)
  * Also, the worst thing that can happen when this crashes is, that the extension does not work anymore, which it wouldn't
  * for malformed files in any case
  */
-void xmlParser::parseShortnames(iostreams::mapped_file &mmap,std::shared_ptr<shortnameStorage> storage)
+void lsp::XmlParser::parseShortnames(iostreams::mapped_file &mmap,std::shared_ptr<ShortnameStorage> storage)
 {
     const char* const start = mmap.const_data();
     const char* current = start;
@@ -167,7 +159,7 @@ void xmlParser::parseShortnames(iostreams::mapped_file &mmap,std::shared_ptr<sho
             }
             depths.push_back(std::make_pair(depth, shortnameString));
 
-            shortnameElement element;
+            ShortnameElement element;
             element.name = shortnameString;
             element.path = pathString;
             element.fileOffset = current - start;
@@ -208,11 +200,11 @@ void xmlParser::parseShortnames(iostreams::mapped_file &mmap,std::shared_ptr<sho
 }
 
 /**
- * @brief first step of the parsing process is to process all linebreaks as the format between lsp::Position and offset representation differs
+ * @brief first step of the parsing process is to process all linebreaks as the format between lsp::types::Position and offset representation differs
  * 
  * Newline locations are stored in an vector. This allows easy conversion from offsets to lineNr/offset pairs later on
  */
-void xmlParser::parseNewlines(iostreams::mapped_file &mmap, std::shared_ptr<shortnameStorage> storage)
+void lsp::XmlParser::parseNewlines(iostreams::mapped_file &mmap, std::shared_ptr<ShortnameStorage> storage)
 {
 
     const char* const start = mmap.const_data();
@@ -245,7 +237,7 @@ void xmlParser::parseNewlines(iostreams::mapped_file &mmap, std::shared_ptr<shor
  * Not robust against malformed files or complying to XML standard again,
  * malformed files will probably crash or at least just return rubbish
  */
-void xmlParser::parseReferences(iostreams::mapped_file &mmap, std::shared_ptr<shortnameStorage> storage)
+void lsp::XmlParser::parseReferences(iostreams::mapped_file &mmap, std::shared_ptr<ShortnameStorage> storage)
 {
     const std::string searchPattern = "REF DEST=\"";
     std::boyer_moore_searcher searcher(searchPattern.begin(), searchPattern.end());
@@ -272,8 +264,8 @@ void xmlParser::parseReferences(iostreams::mapped_file &mmap, std::shared_ptr<sh
             //Try to find the shortname this points to by path and if found, link it up to the reference location and save that reference
             try
             {
-                shortnameElement target = storage->getByFullPath(refString);
-                referenceRange ref;
+                ShortnameElement target = storage->getByFullPath(refString);
+                ReferenceRange ref;
                 ref.targetOffsetRange = std::make_pair(target.fileOffset, static_cast<uint32_t>(target.fileOffset + target.name.size()) - 1);
                 ref.refOffsetRange = std::make_pair(static_cast<uint32_t>(it - start - 1), static_cast<uint32_t>(endOfReference - start - 1));
                 storage->addReference(ref);
@@ -292,17 +284,17 @@ void xmlParser::parseReferences(iostreams::mapped_file &mmap, std::shared_ptr<sh
 
 
 
-lsp::LocationLink xmlParser::getDefinition(const lsp::TextDocumentPositionParams &params)
+lsp::types::LocationLink lsp::XmlParser::getDefinition(const lsp::types::TextDocumentPositionParams &params)
 {
     auto storage = parse(params.textDocument.uri);
     uint32_t offset = storage->getOffsetFromPosition(params.position);
-    referenceRange ref = storage->getReferenceByOffset(offset);
+    ReferenceRange ref = storage->getReferenceByOffset(offset);
 
     uint32_t cursorDistanceFromRefBegin = offset - ref.refOffsetRange.first;
 
     //Get the shortname pointed at, so we can see its path and calculate where
     //on the reference we clicked, so we can go to the different parts of the path
-    shortnameElement elem = storage->getByOffset(ref.targetOffsetRange.first);
+    ShortnameElement elem = storage->getByOffset(ref.targetOffsetRange.first);
     std::string fullPath = elem.getFullPath();
     std::string searchPath = std::string(
         fullPath.begin(),
@@ -310,7 +302,7 @@ lsp::LocationLink xmlParser::getDefinition(const lsp::TextDocumentPositionParams
     );
     elem = storage->getByFullPath(searchPath);
     
-    lsp::LocationLink link;
+    lsp::types::LocationLink link;
     link.originSelectionRange.start = storage->getPositionFromOffset(elem.getOffsetRange().first);
     link.originSelectionRange.end = storage->getPositionFromOffset(elem.getOffsetRange().second);
     link.targetRange.start = storage->getPositionFromOffset(elem.getOffsetRange().first - 1);
@@ -321,10 +313,10 @@ lsp::LocationLink xmlParser::getDefinition(const lsp::TextDocumentPositionParams
     return link;
 }
 
-std::vector<lsp::Location> xmlParser::getReferences(const lsp::ReferenceParams &params)
+std::vector<lsp::types::Location> lsp::XmlParser::getReferences(const lsp::types::ReferenceParams &params)
 {
     auto storage = parse(params.textDocument.uri);
-    std::vector<lsp::Location> foundReferences;
+    std::vector<lsp::types::Location> foundReferences;
     std::pair<uint32_t, uint32_t> shortnameRange;
     try
     {
@@ -335,7 +327,7 @@ std::vector<lsp::Location> xmlParser::getReferences(const lsp::ReferenceParams &
         {
             if( a.targetOffsetRange.first >= shortnameRange.first && a.targetOffsetRange.second <= shortnameRange.second)
             {
-                lsp::Location toAdd;
+                lsp::types::Location toAdd;
                 toAdd.uri = params.textDocument.uri;
                 toAdd.range.start = storage->getPositionFromOffset(a.refOffsetRange.first - 1);
                 toAdd.range.end = storage->getPositionFromOffset(a.refOffsetRange.second);
@@ -347,20 +339,20 @@ std::vector<lsp::Location> xmlParser::getReferences(const lsp::ReferenceParams &
     catch(const lsp::elementNotFoundException &e)
     {
         uint32_t offset = storage->getOffsetFromPosition(params.position);
-        referenceRange ref = storage->getReferenceByOffset(offset);
+        ReferenceRange ref = storage->getReferenceByOffset(offset);
         uint32_t cursorDistanceFromRefBegin = offset - ref.refOffsetRange.first;
 
         //Get the shortname pointed at, so we can see its path and calculate where
         //on the reference we clicked, so we can go to the different parts of the path
-        shortnameElement elem = storage->getByOffset(ref.targetOffsetRange.first);
+        ShortnameElement elem = storage->getByOffset(ref.targetOffsetRange.first);
         std::string fullPath = elem.getFullPath();
         std::string searchPath = std::string(
             fullPath.begin(),
             std::find(fullPath.begin() + cursorDistanceFromRefBegin, fullPath.end(), '/')
         );
         elem = storage->getByFullPath(searchPath);
-        lsp::ReferenceParams newParams = params;
-        lsp::Position newPos = storage->getPositionFromOffset(elem.fileOffset);
+        lsp::types::ReferenceParams newParams = params;
+        lsp::types::Position newPos = storage->getPositionFromOffset(elem.fileOffset);
         newParams.position = newPos;
         //This will at not recurse more than 1 time, because now we can be sure to have an actual shortname position
         return getReferences(newParams);
@@ -375,7 +367,7 @@ std::vector<lsp::Location> xmlParser::getReferences(const lsp::ReferenceParams &
     {
         if (params.context.includeDeclaration)
         {
-            lsp::Location toAdd;
+            lsp::types::Location toAdd;
             toAdd.uri = params.textDocument.uri;
             toAdd.range.start = storage->getPositionFromOffset(shortnameRange.first - 1);
             toAdd.range.end = storage->getPositionFromOffset(shortnameRange.second);
@@ -387,7 +379,7 @@ std::vector<lsp::Location> xmlParser::getReferences(const lsp::ReferenceParams &
     
 }
 
-void xmlParser::preParseFile(const lsp::DocumentUri uri)
+void lsp::XmlParser::preParseFile(const lsp::types::DocumentUri uri)
 {
     parse(uri);
     return;

@@ -19,10 +19,14 @@
 
 using namespace boost;
 
-struct storageElement
+namespace lsp
+{
+
+
+struct StorageElement
 {
     std::string uri;
-    std::shared_ptr<shortnameStorage> storage;
+    std::shared_ptr<ShortnameStorage> storage;
     uint32_t lastUsedID;
 };
 
@@ -30,24 +34,24 @@ struct storageElement
  * @brief Parser to precess arxml files and manage its data
  * 
  */
-class xmlParser
+class XmlParser
 {
 public:
     /**
      * @brief Get link locations for a given position
      * 
      * @param posParams start position
-     * @return lsp::LocationLink Ranges for links
+     * @return lsp::types::LocationLink Ranges for links
      */
-    lsp::LocationLink getDefinition(const lsp::TextDocumentPositionParams &posParams);
+    lsp::types::LocationLink getDefinition(const lsp::types::TextDocumentPositionParams &posParams);
 
     /**
      * @brief Get all reference locations for a given position
      * 
      * @param posParams start position
-     * @return std::vector<lsp::Location> locations for all corresponding references
+     * @return std::vector<lsp::types::Location> locations for all corresponding references
      */
-    std::vector<lsp::Location> getReferences(const lsp::ReferenceParams &posParams);
+    std::vector<lsp::types::Location> getReferences(const lsp::types::ReferenceParams &posParams);
 
     /**
      * @brief parse the file into a shortnameStorage before the first request
@@ -55,15 +59,18 @@ public:
      * @param uri document to preparse
      * 
      */
-    void preParseFile(const lsp::DocumentUri uri);
+    void preParseFile(const lsp::types::DocumentUri uri);
 
 private:
-    std::shared_ptr<shortnameStorage> parse(const lsp::DocumentUri uri);
-    void parseShortnames(iostreams::mapped_file &mmap, std::shared_ptr<shortnameStorage> storage);
-    void parseReferences(iostreams::mapped_file &mmap, std::shared_ptr<shortnameStorage> storage);
-    void parseNewlines(iostreams::mapped_file &mmap, std::shared_ptr<shortnameStorage> storage);
+    std::shared_ptr<ShortnameStorage> parse(const lsp::types::DocumentUri uri);
+    void parseShortnames(iostreams::mapped_file &mmap, std::shared_ptr<ShortnameStorage> storage);
+    void parseReferences(iostreams::mapped_file &mmap, std::shared_ptr<ShortnameStorage> storage);
+    void parseNewlines(iostreams::mapped_file &mmap, std::shared_ptr<ShortnameStorage> storage);
 
-    std::list<storageElement> storages;
+    std::list<StorageElement> storages;
 };
+
+
+}
 
 #endif /* XMLPARSER_H */

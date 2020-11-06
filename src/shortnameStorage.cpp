@@ -4,7 +4,7 @@
 #include "shortnameStorage.hpp"
 #include "lspExceptions.hpp"
 
-const shortnameElement &shortnameStorage::getByFullPath(const std::string &searchString) const
+const lsp::ShortnameElement &lsp::ShortnameStorage::getByFullPath(const std::string &searchString) const
 {
     auto res = fullPathIndex.find(searchString);
     if (res != fullPathIndex.end())
@@ -14,7 +14,7 @@ const shortnameElement &shortnameStorage::getByFullPath(const std::string &searc
     else throw lsp::elementNotFoundException();
 }
 
-const shortnameElement &shortnameStorage::getByOffset(const uint32_t searchOffset) const
+const lsp::ShortnameElement &lsp::ShortnameStorage::getByOffset(const uint32_t searchOffset) const
 {
     auto res = offsetIndex.upper_bound(searchOffset);
 
@@ -35,7 +35,7 @@ const shortnameElement &shortnameStorage::getByOffset(const uint32_t searchOffse
     }
 }
 
-void shortnameStorage::addShortname(const shortnameElement &elem /*, const auto hint */)
+void lsp::ShortnameStorage::addShortname(const ShortnameElement &elem)
 {
     if(elem.name.size())
     {
@@ -47,7 +47,7 @@ void shortnameStorage::addShortname(const shortnameElement &elem /*, const auto 
     }
 }
 
-void shortnameStorage::addReference(const referenceRange &ref)
+void lsp::ShortnameStorage::addReference(const ReferenceRange &ref)
 {
     if(ref.refOffsetRange.first <= ref.refOffsetRange.second
         && ref.targetOffsetRange.first <= ref.targetOffsetRange.second)
@@ -61,10 +61,10 @@ void shortnameStorage::addReference(const referenceRange &ref)
     
 }
 
-const referenceRange &shortnameStorage::getReferenceByOffset(const uint32_t searchOffset) const
+const lsp::ReferenceRange &lsp::ShortnameStorage::getReferenceByOffset(const uint32_t searchOffset) const
 {
     auto res = std::find_if(references.begin(), references.end(),
-    [searchOffset](const referenceRange &range)
+    [searchOffset](const ReferenceRange &range)
     {
         if (range.refOffsetRange.first <= searchOffset && range.refOffsetRange.second >= searchOffset)
         {
@@ -82,12 +82,12 @@ const referenceRange &shortnameStorage::getReferenceByOffset(const uint32_t sear
     else throw lsp::elementNotFoundException();
 }
 
-const std::pair<uint32_t, uint32_t> shortnameElement::getOffsetRange() const
+const std::pair<uint32_t, uint32_t> lsp::ShortnameElement::getOffsetRange() const
 {
     return std::make_pair(fileOffset, fileOffset + name.size() - 1);
 }
 
-std::string shortnameElement::getFullPath () const
+std::string lsp::ShortnameElement::getFullPath () const
 {
     if(path.size())
     {
@@ -99,26 +99,26 @@ std::string shortnameElement::getFullPath () const
     }
 }
 
-lsp::Position shortnameStorage::getPositionFromOffset(const uint32_t offset)
+lsp::types::Position lsp::ShortnameStorage::getPositionFromOffset(const uint32_t offset)
 {
-    lsp::Position ret;
+    lsp::types::Position ret;
     uint32_t index = std::lower_bound(newlineOffsets.begin(), newlineOffsets.end(), offset) - newlineOffsets.begin() - 1;
     ret.character = offset - newlineOffsets[index];
     ret.line = index;
     return ret;
 }
 
-uint32_t shortnameStorage::getOffsetFromPosition(const lsp::Position &pos)
+uint32_t lsp::ShortnameStorage::getOffsetFromPosition(const lsp::types::Position &pos)
 {
     return newlineOffsets[pos.line] + pos.character;
 }
 
-void shortnameStorage::addNewlineOffset(uint32_t offset)
+void lsp::ShortnameStorage::addNewlineOffset(uint32_t offset)
 {
     newlineOffsets.push_back(offset);
 }
 
-void shortnameStorage::reserveNewlines(const uint32_t numNewlines)
+void lsp::ShortnameStorage::reserveNewlines(const uint32_t numNewlines)
 {
     newlineOffsets.reserve(numNewlines);
 }

@@ -13,6 +13,8 @@
 
 namespace lsp
 {
+namespace types
+{
     typedef std::string DocumentUri;
 
     struct Position
@@ -24,37 +26,37 @@ namespace lsp
 
     struct Range
     {
-        lsp::Position start;
-        lsp::Position end;
+        lsp::types::Position start;
+        lsp::types::Position end;
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Range, start, end)
 
     struct Location
     {
-        lsp::DocumentUri uri;
-        lsp::Range range;
+        lsp::types::DocumentUri uri;
+        lsp::types::Range range;
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Location, uri, range)
 
     struct LocationLink
     {
-        lsp::Range originSelectionRange;
-        lsp::DocumentUri targetUri;
-        lsp::Range targetRange;
-        lsp::Range targetSelectionRange;
+        lsp::types::Range originSelectionRange;
+        lsp::types::DocumentUri targetUri;
+        lsp::types::Range targetRange;
+        lsp::types::Range targetSelectionRange;
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LocationLink, originSelectionRange, targetUri, targetRange, targetSelectionRange)
 
     struct TextDocumentIdentifier
     {
-        lsp::DocumentUri uri;
+        lsp::types::DocumentUri uri;
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextDocumentIdentifier, uri)
 
     struct TextDocumentPositionParams
     {
-        lsp::TextDocumentIdentifier textDocument;
-        lsp::Position position;
+        lsp::types::TextDocumentIdentifier textDocument;
+        lsp::types::Position position;
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextDocumentPositionParams, textDocument, position)
 
@@ -66,15 +68,15 @@ namespace lsp
 
     struct ReferenceParams
     {
-        lsp::TextDocumentIdentifier textDocument;
-        lsp::Position position;
-        lsp::ReferenceContext context;
+        lsp::types::TextDocumentIdentifier textDocument;
+        lsp::types::Position position;
+        lsp::types::ReferenceContext context;
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ReferenceParams, textDocument, position, context)
 
     struct DocumentColorParams
     {
-        lsp::TextDocumentIdentifier textDocument;
+        lsp::types::TextDocumentIdentifier textDocument;
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DocumentColorParams, textDocument)
 
@@ -89,5 +91,6 @@ namespace lsp
         std::vector<ConfigurationItem> items;
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConfigurationParams, items)
+}
 }
 #endif /* TYPES_H */

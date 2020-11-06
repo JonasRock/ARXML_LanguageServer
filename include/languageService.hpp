@@ -16,7 +16,7 @@
 #include "jsonrpcpp.hpp"
 
 #include "ioHandler.hpp"
-#include "lspParser.hpp"
+#include "messageParser.hpp"
 #include "xmlParser.hpp"
 
 
@@ -41,8 +41,8 @@ private:
     static void run();
     static uint32_t getRequestID();
     static inline std::shared_ptr<lsp::IOHandler> ioHandler_ = nullptr;
-    static inline std::shared_ptr<lsp::Parser> lspParser_ = nullptr;
-    static inline std::shared_ptr<xmlParser> xmlParser_ = nullptr;
+    static inline std::shared_ptr<lsp::MessageParser> messageParser_ = nullptr;
+    static inline std::shared_ptr<XmlParser> xmlParser_ = nullptr;
 
     //Callbacks for Language Server Protocol
     static jsonrpcpp::response_ptr request_initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);

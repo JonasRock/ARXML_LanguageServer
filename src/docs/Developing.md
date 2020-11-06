@@ -72,9 +72,9 @@ The following sections describe how the server functions internally and are thus
 
 - lsp::IOHandler: Manages the connection to the socket, as well as reading and writing
 - lsp::LanguageService: Contains main routine and all callbacks
-- lsp::Parser: Manages parsing of messages and management of corresponding callbacks
-- xmlParser: Handles processing of arxml files and provides file information
-- shortnameStorage: Data structure used for holding parsed arxml data
+- lsp::MessageParser: Manages parsing of messages and management of corresponding callbacks
+- lsp::XmlParser: Handles processing of arxml files and provides file information
+- lsp::ShortnameStorage: Data structure used for holding parsed arxml data
 
 ### Startup ###
 
@@ -85,32 +85,32 @@ After an acknowledgement notification from the client the server is fully functi
 
 ### Request Handling ###
 
-The server waits until a message is sent to it, parses the message, calculates the response(s) and sends it(them) back. This loop is synchronous, the server can only process the next message after the response to the first one is sent back.
+The server waits until a message is sent to it, parses the message, calculates the response(s) and sends it(them) back. This loop is synchronous, the server can only process the next message after the response(s) to the first one is(are) sent back.
 
-For every request/notification we can receive based on our initialization, we register a callback function in the languageService that handles the requests.
+For every request/notification we can receive based on our initialization, we register a callback function in the lsp::LanguageService that owns the lsp::MessageParser that handles the requests.
 
-The lspParser provides the arguments for the request to the callback, that processes the request, formulates a result and passes it back to the parser, that serializes it and passes it back to the main to be sent back out to the client via socket.
+The lsp::MessageParser provides the arguments for the request to the callback, that processes the request, formulates a result and passes it back to the parser, that serializes it and passes it back to the main to be sent back out to the client via socket.
 
 The data flow can be visualized as such:
 ~~~~~~~~~~~~~~~~
 Request:
 
-IOHandler -> LanguageService -> LspParser -> callback -> xmlParser -> shortnameStorage
+IOHandler -> LanguageService -> MessageParser -> callback -> XmlParser -> ShortnameStorage
 ~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~
 Response:
 
-IOHandler <- LanguageService <- LspParser <- callback <- xmlParser <- shortnameStorage
+IOHandler <- LanguageService <- MessageParser <- callback <- XmlParser <- ShortnameStorage
 ~~~~~~~~~~~~~~~~
 
 ### Parsing the ARXML file ###
 
-When first asked for a definition or request location, the server memorymaps the file and parses it. After it has built its internal data structures, it closes the file again, and does not need to reopen it to process requests in that file, as future requests will only require the internal data.
+When first asked for a definition or request location, the server memorymaps the file and parses it (with the lsp::XmlParser). After it has built its internal data structures, it closes the file again, and does not need to reopen it to process requests in that file, as future requests will only require the internal data.
 
-This data is managed by shortnameStorage and
-owned by the xmlParser.
+This data is managed by lsp::ShortnameStorage and
+owned by the lsp::XmlParser.
 
-The callbacks get their results from the parser.
+The callbacks get their results from the lsp::XmlParser.
 
 -----------------
 
@@ -136,7 +136,7 @@ json result = {
 Don't forget to add the prototpye to languageService.hpp\n
 The Response json object must be formatted according to LSP specification
 ~~~~~~~~~~~~~~~~~~~~~~~
-langugaeService.cpp: lsp::LanguageService:
+languageService.cpp: lsp::LanguageService:
 
 jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_hover(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
@@ -147,7 +147,7 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_hover(const j
 }
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-3. If needed, extend the xmlParser
+3. If needed, extend the lsp::XmlParser
 
 4. register your callback in lsp::LanguageService::start():
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -159,7 +159,7 @@ parser.register_request_callback("textDocument/hover", request_textDocument_hove
 To make your life easier, you can declare the json interfaces from the LSP specification as structs int types.hpp and add the macro like for the others.
 This enables you to just assign a json object with a struct and the other way around, so you can work with cpp data structures and convert it to json for the return value. For example:
 ~~~~~~~~~~~~~~~~~~~~~~~
-types.hpp: lsp:
+types.hpp: lsp::types:
 
 struct Position
 {

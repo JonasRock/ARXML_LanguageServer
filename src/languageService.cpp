@@ -9,19 +9,19 @@
 void lsp::LanguageService::start(std::string address, uint32_t port)
 {
     ioHandler_ = std::make_shared<lsp::IOHandler>(address, port);
-    lspParser_ = std::make_shared<lsp::Parser>();
-    xmlParser_ = std::make_shared<xmlParser>();
+    messageParser_ = std::make_shared<lsp::MessageParser>();
+    xmlParser_ = std::make_shared<XmlParser>();
 
     //register Callbacks here
-    lspParser_->register_notification_callback("initialized", lsp::LanguageService::notification_initialized);
-    lspParser_->register_notification_callback("exit", lsp::LanguageService::notification_exit);
-    lspParser_->register_notification_callback("$/cancelRequest", lsp::LanguageService::notification_special_cancelRequest);
+    messageParser_->register_notification_callback("initialized", lsp::LanguageService::notification_initialized);
+    messageParser_->register_notification_callback("exit", lsp::LanguageService::notification_exit);
+    messageParser_->register_notification_callback("$/cancelRequest", lsp::LanguageService::notification_special_cancelRequest);
 
-    lspParser_->register_request_callback("initialize", lsp::LanguageService::request_initialize);
-    lspParser_->register_request_callback("shutdown", lsp::LanguageService::request_shutdown);
-    lspParser_->register_request_callback("textDocument/definition", lsp::LanguageService::request_textDocument_definition);
-    lspParser_->register_request_callback("textDocument/references", lsp::LanguageService::request_textDocument_references);
-    lspParser_->register_request_callback("textDocument/documentColor", lsp::LanguageService::request_textDocument_documentColor);
+    messageParser_->register_request_callback("initialize", lsp::LanguageService::request_initialize);
+    messageParser_->register_request_callback("shutdown", lsp::LanguageService::request_shutdown);
+    messageParser_->register_request_callback("textDocument/definition", lsp::LanguageService::request_textDocument_definition);
+    messageParser_->register_request_callback("textDocument/references", lsp::LanguageService::request_textDocument_references);
+    messageParser_->register_request_callback("textDocument/documentColor", lsp::LanguageService::request_textDocument_documentColor);
     //begin the main run loop
     run();
 }
@@ -33,7 +33,7 @@ void lsp::LanguageService::run()
         try
         {
             std::string message = ioHandler_->readNextMessage();
-            jsonrpcpp::entity_ptr ret = lspParser_->parse(message);
+            jsonrpcpp::entity_ptr ret = messageParser_->parse(message);
             if(ret)
             {
                 if(ret->is_response())
@@ -93,11 +93,11 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_shutdown(const jsonrpcpp::
 
 jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_references(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
-    lsp::ReferenceParams p = params.to_json().get<lsp::ReferenceParams>();
+    lsp::types::ReferenceParams p = params.to_json().get<lsp::types::ReferenceParams>();
     json result;
     try
     {
-        std::vector<lsp::Location> resVec = xmlParser_->getReferences(p);
+        std::vector<lsp::types::Location> resVec = xmlParser_->getReferences(p);
         result = resVec;
     }
     catch (lsp::elementNotFoundException &e)
@@ -109,11 +109,11 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_references(co
 
 jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_definition(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
-        lsp::TextDocumentPositionParams p = params.to_json().get<lsp::TextDocumentPositionParams>();
+        lsp::types::TextDocumentPositionParams p = params.to_json().get<lsp::types::TextDocumentPositionParams>();
     json result;
     try
     {
-        lsp::LocationLink link = xmlParser_->getDefinition(p);
+        lsp::types::LocationLink link = xmlParser_->getDefinition(p);
         result = link;
     }
     catch (lsp::elementNotFoundException &e)
@@ -126,7 +126,7 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_definition(co
 
 jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_documentColor(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
-    lsp::DocumentColorParams p = params.to_json().get<lsp::DocumentColorParams>();
+    lsp::types::DocumentColorParams p = params.to_json().get<lsp::types::DocumentColorParams>();
     if(lsp::config::precalculateOnOpeningFiles)
     {
         xmlParser_->preParseFile(p.textDocument.uri);
@@ -137,11 +137,11 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_documentColor
 
 void lsp::LanguageService::toClient_request_workspace_configuration()
 {
-    json paramsjson = lsp::ConfigurationParams{std::vector<lsp::ConfigurationItem>{{"arxmlNavigationHelper"}}};
+    json paramsjson = lsp::types::ConfigurationParams{std::vector<lsp::types::ConfigurationItem>{{"arxmlNavigationHelper"}}};
     jsonrpcpp::Id id(getNextRequestID());
     jsonrpcpp::Request request(id, "workspace/configuration", paramsjson);
     ioHandler_->addMessageToSend(request.to_json().dump());
-    lspParser_->register_response_callback(id.int_id(), response_workspace_configuration);
+    messageParser_->register_response_callback(id.int_id(), response_workspace_configuration);
 }
 
 void lsp::LanguageService::response_workspace_configuration(const json &results)

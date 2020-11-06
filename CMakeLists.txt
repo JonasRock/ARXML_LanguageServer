@@ -17,12 +17,11 @@ add_executable(ARXML_LanguageServer
   src/ioHandler.cpp
   src/languageService.cpp
   src/shortnameStorage.cpp
-  src/lspParser.cpp
+  src/messageParser.cpp
   ${BOOST_MAPPED_FILE_CPP_PATH}
 )
 target_include_directories(ARXML_LanguageServer PUBLIC include)
 target_include_directories(ARXML_LanguageServer PUBLIC include/extern)
-
 add_subdirectory(src)
 add_subdirectory(include)
 add_subdirectory(include/extern)

@@ -21,11 +21,15 @@
 
 using namespace boost;
 
+namespace lsp
+{
+
+
 /**
  * @brief Represents link ranges for a reference
  * 
  */
-struct referenceRange
+struct ReferenceRange
 {
     std::pair<uint32_t, uint32_t> refOffsetRange;
     std::pair<uint32_t, uint32_t> targetOffsetRange;
@@ -36,7 +40,7 @@ struct referenceRange
  * @brief Represents a shortname element with all its required info
  * 
  */
-class shortnameElement
+class ShortnameElement
 {
 public:
     /**
@@ -81,15 +85,15 @@ struct offsetIndex_t {};
 /// @endcond
 
 typedef multi_index_container<
-        shortnameElement,
+        ShortnameElement,
         multi_index::indexed_by<
             multi_index::ordered_unique<
                 multi_index::tag<fullPathIndex_t>,
-                multi_index::const_mem_fun<shortnameElement, std::string, &shortnameElement::getFullPath>
+                multi_index::const_mem_fun<ShortnameElement, std::string, &ShortnameElement::getFullPath>
             >,
             multi_index::ordered_unique<
                 multi_index::tag<offsetIndex_t>,
-                multi_index::member<shortnameElement, uint32_t, &shortnameElement::fileOffset>
+                multi_index::member<ShortnameElement, uint32_t, &ShortnameElement::fileOffset>
             >
         >
     > shortnameContainer_t;
@@ -98,7 +102,7 @@ typedef multi_index_container<
  * @brief Data structure for the parsed arxml data
  * 
  */
-class shortnameStorage
+class ShortnameStorage
 {
 public:
     /**
@@ -106,14 +110,14 @@ public:
      * 
      * @param elem element to be inserted
      */
-    void addShortname(const shortnameElement &elem);
+    void addShortname(const ShortnameElement &elem);
 
     /**
      * @brief adds a given reference element to the storage
      * 
      * @param ref reference to be inserted
      */
-    void addReference(const referenceRange &ref);
+    void addReference(const ReferenceRange &ref);
 
     /**
      * @brief Get a shortname from storage by its full path, including its name
@@ -122,7 +126,7 @@ public:
      * @return const shortnameElement& 
      * @exception lsp::elementNotFoundException When no result can be found using the searchPath
      */
-    const shortnameElement &getByFullPath(const std::string &searchPath) const;
+    const ShortnameElement &getByFullPath(const std::string &searchPath) const;
 
     /**
      * @brief Get a shortname from storage by a offset
@@ -131,7 +135,7 @@ public:
      * @return const shortnameElement& 
      * @exception lsp::elementNotFoundException When no result can be found
      */
-    const shortnameElement &getByOffset(const uint32_t searchOffset) const;
+    const ShortnameElement &getByOffset(const uint32_t searchOffset) const;
 
     /**
      * @brief Get a reference by its offset
@@ -140,7 +144,7 @@ public:
      * @return const referenceRange& 
      * @exception lsp::elementNotFoundException When no result can be found
      */
-    const referenceRange &getReferenceByOffset(const uint32_t searchOffset) const;
+    const ReferenceRange &getReferenceByOffset(const uint32_t searchOffset) const;
 
     /**
      * @brief Convert from char offset to lineNr/charNr position
@@ -148,7 +152,7 @@ public:
      * @param offset Char offset from file start
      * @return lsp::Position position in lineNr/charNr representation
      */
-    lsp::Position getPositionFromOffset(const uint32_t offset);
+    lsp::types::Position getPositionFromOffset(const uint32_t offset);
 
     /**
      * @brief Convert from lineNr/charNr to char offset
@@ -156,7 +160,7 @@ public:
      * @param pos Position in lineNr/charNr representation
      * @return uint32_t Char offset from file start
      */
-    uint32_t getOffsetFromPosition(const lsp::Position &pos);
+    uint32_t getOffsetFromPosition(const lsp::types::Position &pos);
 
     /** @cond
      * 
@@ -170,13 +174,13 @@ public:
      * @brief Contains all found references
      * 
      */
-    std::deque<referenceRange> references;
+    std::deque<ReferenceRange> references;
     
     /**
      * @brief Construct a new shortname Storage object
      * 
      */
-    shortnameStorage()
+    ShortnameStorage()
         : shortnames(), references(),
           fullPathIndex{shortnames.get<fullPathIndex_t>()},
           offsetIndex{shortnames.get<offsetIndex_t>()}
@@ -187,7 +191,9 @@ private:
     std::vector<uint32_t> newlineOffsets;
     shortnameContainer_t::index<fullPathIndex_t>::type &fullPathIndex;
     shortnameContainer_t::index<offsetIndex_t>::type &offsetIndex;
-    
 };
+
+
+}
 
 #endif /* SHORTNAMESTORAGE_H */

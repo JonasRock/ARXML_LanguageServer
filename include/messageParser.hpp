@@ -25,7 +25,7 @@ namespace lsp
  * @brief Manages message parsing and callback assignment/execution
  * 
  */
-class Parser: public jsonrpcpp::Parser
+class MessageParser: public jsonrpcpp::Parser
 {
 typedef std::function<void(const json &results)> response_callback;
 

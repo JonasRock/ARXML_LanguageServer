@@ -1,25 +1,25 @@
-#include "lspParser.hpp"
+#include "MessageParser.hpp"
 #include "lspExceptions.hpp"
 
-void lsp::Parser::register_response_callback(const uint32_t id, response_callback callback)
+void lsp::MessageParser::register_response_callback(const uint32_t id, response_callback callback)
 {
     if(callback)
         response_callbacks_[id] = callback;
 }
 
-void lsp::Parser::register_notification_callback(const std::string &notification, jsonrpcpp::notification_callback callback)
+void lsp::MessageParser::register_notification_callback(const std::string &notification, jsonrpcpp::notification_callback callback)
 {
     if(callback)
         notification_callbacks_[notification] = callback;
 }
 
-void lsp::Parser::register_request_callback(const std::string &request, jsonrpcpp::request_callback callback)
+void lsp::MessageParser::register_request_callback(const std::string &request, jsonrpcpp::request_callback callback)
 {
     if(callback)
         request_callbacks_[request] = callback;
 }
 
-jsonrpcpp::entity_ptr lsp::Parser::parse(const std::string &json_str)
+jsonrpcpp::entity_ptr lsp::MessageParser::parse(const std::string &json_str)
 {
     jsonrpcpp::entity_ptr entity = do_parse(json_str);
     if (entity && entity->is_notification())

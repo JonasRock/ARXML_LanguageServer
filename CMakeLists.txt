@@ -9,6 +9,7 @@ set(BOOST_MAPPED_FILE_CPP_PATH C:/boost/libs/iostreams/src/mapped_file.cpp)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(GCC_COVERAGE_COMPILE_FLAGS "-fdiagnostics-color")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG_TO_TERMINAL")
 
 add_executable(ARXML_LanguageServer
   src/main.cpp

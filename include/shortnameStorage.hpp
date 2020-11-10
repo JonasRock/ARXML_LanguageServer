@@ -122,7 +122,7 @@ public:
     /**
      * @brief Get a shortname from storage by its full path, including its name
      * 
-     * @param searchPath the pathString to search for
+     * @param searchPath the pathString to search for, without trailing/leading '/'
      * @return const shortnameElement& 
      * @exception lsp::elementNotFoundException When no result can be found using the searchPath
      */
@@ -136,6 +136,14 @@ public:
      * @exception lsp::elementNotFoundException When no result can be found
      */
     const ShortnameElement &getByOffset(const uint32_t searchOffset) const;
+
+    /**
+     * @brief Get ashortname from storage by only its path, not including the name
+     * 
+     * @param searchPath the pathString to search for, without trailing/leading '/'
+     * @return const std::vector<std::shared_ptr<lsp::ShortnameElement>> pointers to all matching shortnames
+     */
+    const std::vector<std::shared_ptr<lsp::ShortnameElement>> getByOnlyPath(const std::string &searchPath) const;
 
     /**
      * @brief Get a reference by its offset

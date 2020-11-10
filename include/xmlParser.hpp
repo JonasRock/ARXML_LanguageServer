@@ -60,6 +60,8 @@ public:
      */
     void preParseFile(const lsp::types::DocumentUri uri);
 
+    std::vector<lsp::types::non_standard::ShortnameTreeElement> getChildren(const lsp::types::non_standard::GetChildrenParams &params);
+
 private:
     std::shared_ptr<ShortnameStorage> parse(const lsp::types::DocumentUri uri);
     void parseShortnames(iostreams::mapped_file &mmap, std::shared_ptr<ShortnameStorage> storage);

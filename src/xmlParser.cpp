@@ -373,8 +373,18 @@ std::vector<lsp::types::Location> lsp::XmlParser::getReferences(const lsp::types
         }
         return foundReferences;
     }
+}
 
-    
+std::vector<lsp::types::non_standard::ShortnameTreeElement> lsp::XmlParser::getChildren(const lsp::types::non_standard::GetChildrenParams &params)
+{
+    std::vector<lsp::types::non_standard::ShortnameTreeElement> res;
+    auto storage = parse(params.uri);
+    auto elements = storage->getByOnlyPath(params.path);
+    for (auto &a : elements)
+    {
+        res.push_back(lsp::types::non_standard::ShortnameTreeElement{a->name, a->path, 1});
+    }
+    return res;
 }
 
 void lsp::XmlParser::preParseFile(const lsp::types::DocumentUri uri)

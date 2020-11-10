@@ -23,6 +23,7 @@ void lsp::LanguageService::start(std::string address, uint32_t port)
     messageParser_->register_request_callback("textDocument/definition", lsp::LanguageService::request_textDocument_definition);
     messageParser_->register_request_callback("textDocument/references", lsp::LanguageService::request_textDocument_references);
     messageParser_->register_request_callback("textDocument/documentColor", lsp::LanguageService::request_textDocument_documentColor);
+    messageParser_->register_request_callback("treeView/getChildren", lsp::LanguageService::request_treeView_getChildren);
     //begin the main run loop
     run();
 }
@@ -136,6 +137,22 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_documentColor
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }
 
+jsonrpcpp::response_ptr lsp::LanguageService::request_treeView_getChildren(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+{
+    lsp::types::non_standard::GetChildrenParams p;
+
+    if((params.to_json().contains("path")))
+        p = params.to_json().get<lsp::types::non_standard::GetChildrenParams>();
+    else
+    {
+        p.uri = (params.to_json())["uri"];
+        p.path = "";
+    }
+    std::vector<lsp::types::non_standard::ShortnameTreeElement> resShortnames = xmlParser_->getChildren(p);
+    json result = resShortnames;
+    return std::make_shared<jsonrpcpp::Response>(id, result);
+}
+
 void lsp::LanguageService::toClient_request_workspace_configuration()
 {
     json paramsjson = lsp::types::ConfigurationParams{std::vector<lsp::types::ConfigurationItem>{{"arxmlNavigationHelper"}}};
@@ -147,7 +164,9 @@ void lsp::LanguageService::toClient_request_workspace_configuration()
 
 void lsp::LanguageService::response_workspace_configuration(const json &results)
 {
+#ifdef DEBUG_TO_CONSOLE
     std::cout << "Configuration received:\n" << results.dump(2) << "\n\n";
+#endif
     lsp::config::maxOpenFiles = results[0]["maxOpenFiles"].get<uint32_t>();
     lsp::config::precalculateOnOpeningFiles = results[0]["precalculateOnOpeningFiles"].get<bool>();
 }

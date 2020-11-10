@@ -91,6 +91,25 @@ namespace types
         std::vector<ConfigurationItem> items;
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConfigurationParams, items)
+
+    namespace non_standard
+    {
+        struct ShortnameTreeElement
+        {
+            std::string name;
+            std::string path;
+            uint8_t cState;
+        };
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ShortnameTreeElement, name, path, cState)
+
+        struct GetChildrenParams
+        {
+            std::string path;
+            std::string uri;
+        };
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GetChildrenParams, path, uri)
+    }
+
 }
 }
 #endif /* TYPES_H */

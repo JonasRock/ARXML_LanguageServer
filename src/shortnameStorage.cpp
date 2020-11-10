@@ -34,6 +34,19 @@ const lsp::ShortnameElement &lsp::ShortnameStorage::getByOffset(const uint32_t s
     }
 }
 
+const std::vector<std::shared_ptr<lsp::ShortnameElement>> lsp::ShortnameStorage::getByOnlyPath(const std::string &searchString) const
+{
+    std::vector<std::shared_ptr<lsp::ShortnameElement>> results;
+    for( auto &elem: shortnames)
+    {
+        if(elem.path == searchString)
+        {
+            results.push_back(std::make_shared<lsp::ShortnameElement>(elem));
+        }
+    }
+    return results;
+}
+
 void lsp::ShortnameStorage::addShortname(const ShortnameElement &elem)
 {
     if(elem.name.size())

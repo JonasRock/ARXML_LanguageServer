@@ -26,7 +26,7 @@ std::string lsp::IOHandler::readNextMessage()
     std::string ret;
     if (read_(ret))
     {
-#ifdef DEBUG_TO_TERMINAL
+#ifndef NO_TERMINAL_OUTPUT
         std::cout << " >> Receiving Message:\n" << ret << "\n\n";
 #endif
         return ret;
@@ -44,7 +44,7 @@ void lsp::IOHandler::writeAllMessages()
         std::string toSend = sendStack_.top();
         sendStack_.pop();
         write_(toSend);
-#ifdef DEBUG_TO_TERMINAL
+#ifndef NO_TERMINAL_OUTPUT
         if(toSend.size() > (1024*5)) //5kb write limit to console
             std::cout << " >> Sending Message:\n" << toSend.substr(0, 1024*5) << "\n>> Console Write limit reached. The write to the socket was unaffected, this is to prevent the console from crashing.\n\n";
         else

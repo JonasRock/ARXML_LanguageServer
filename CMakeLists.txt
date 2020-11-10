@@ -2,14 +2,22 @@ cmake_minimum_required(VERSION 3.10)
 
 project(ARXML_LanguageServer VERSION 0.1)
 
-######## configuration Options ########
+######## Configuration Options ########
 # Set the path to the boost/iostreams/src/mapped_file.cpp
 set(BOOST_MAPPED_FILE_CPP_PATH C:/boost/libs/iostreams/src/mapped_file.cpp)
+# If YES, the server will output messages to the terminal even in release mode
+set(ENABLE_RELEASE_CONSOLE_OUTPUT YES)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(GCC_COVERAGE_COMPILE_FLAGS "-fdiagnostics-color")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG_TO_TERMINAL")
+if (ENABLE_RELEASE_CONSOLE_OUTPUT)
+  message("Custom Settings: Terminal Logging enabled")
+else()
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEBUG} -DNO_TERMINAL_OUTPUT")
+  message("Custom Settings: ReleasTerminal Logging disabled")
+endif()
+message("Custom Settings: Boost::mapped_file.cpp location: " ${BOOST_MAPPED_FILE_CPP_PATH})
 
 add_executable(ARXML_LanguageServer
   src/main.cpp

@@ -117,7 +117,7 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_references(co
 
 jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_definition(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
-        lsp::types::TextDocumentPositionParams p = params.to_json().get<lsp::types::TextDocumentPositionParams>();
+    lsp::types::TextDocumentPositionParams p = params.to_json().get<lsp::types::TextDocumentPositionParams>();
     json result;
     try
     {

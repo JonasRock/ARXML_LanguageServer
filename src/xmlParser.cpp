@@ -282,7 +282,7 @@ void lsp::XmlParser::parseReferences(iostreams::mapped_file &mmap, std::shared_p
 lsp::types::LocationLink lsp::XmlParser::getDefinition(const lsp::types::TextDocumentPositionParams &params)
 {
     auto storage = parse(params.textDocument.uri);
-    uint32_t offset = storage->getOffsetFromPosition(params.position);
+    uint32_t offset = storage->getOffsetFromPosition(params.position) + 1;
     ReferenceRange ref = storage->getReferenceByOffset(offset);
 
     uint32_t cursorDistanceFromRefBegin = offset - ref.refOffsetRange.first;
@@ -314,7 +314,7 @@ std::vector<lsp::types::Location> lsp::XmlParser::getReferences(const lsp::types
     std::pair<uint32_t, uint32_t> shortnameRange;
     try
     {
-        uint32_t offset = storage->getOffsetFromPosition(params.position);
+        uint32_t offset = storage->getOffsetFromPosition(params.position) + 1;
         shortnameRange = storage->getByOffset(offset).getOffsetRange();
 
         for (auto &a : storage->references)
@@ -376,7 +376,7 @@ std::vector<lsp::types::non_standard::ShortnameTreeElement> lsp::XmlParser::getC
     auto elements = storage->getByOnlyPath(params.path);
     for (auto &a : elements)
     {
-        res.push_back(lsp::types::non_standard::ShortnameTreeElement{a->name, a->path, a->hasChildren});
+        res.push_back(lsp::types::non_standard::ShortnameTreeElement{a->name, a->path, storage->getPositionFromOffset(a->fileOffset), a->hasChildren});
     }
     return res;
 }

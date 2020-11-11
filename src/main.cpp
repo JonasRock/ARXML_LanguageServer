@@ -21,6 +21,7 @@ int main(int argc, char** argv)
         portNr = std::stoi(argv[1]);
     }
 
-    //init
     lsp::LanguageService::start("127.0.0.1", portNr);
+    
+    return 0;
 }

@@ -40,7 +40,7 @@ struct ReferenceRange
  * @brief Represents a shortname element with all its required info
  * 
  */
-class ShortnameElement
+struct ShortnameElement
 {
 public:
     /**
@@ -60,6 +60,12 @@ public:
      * 
      */
     uint32_t fileOffset;
+
+    /**
+     * @brief true, if the path of other shortnames includes this
+     * 
+     */
+    bool hasChildren;
 
     /**
      * @brief Returns the char offsets from file start to first and last char of the shortname

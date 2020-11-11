@@ -36,6 +36,11 @@ void lsp::LanguageService::run()
         {
             std::string message = ioHandler_->readNextMessage();
             jsonrpcpp::entity_ptr ret = messageParser_->parse(message);
+            if(lsp::config::shutdown)
+            {
+                //Stop the server
+                break;
+            }
             if(ret)
             {
                 if(ret->is_response())
@@ -67,6 +72,7 @@ void lsp::LanguageService::notification_initialized(const jsonrpcpp::Parameter &
 
 void lsp::LanguageService::notification_exit(const jsonrpcpp::Parameter &params)
 {
+    lsp::config::shutdown = true;
     //exit
 }
 

@@ -199,7 +199,7 @@ void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file 
     const char *const end = current + mmap.size();
 
     uint32_t depth = 0;
-    std::vector<std::pair<std::uint32_t, lsp::ShortnameElement>> depthElements;
+    std::vector<std::pair<std::uint32_t, lsp::ShortnameElement*>> depthElements;
 
     //Preparation for reference parsing
     const std::string searchPattern = "-REF DEST =\"";
@@ -238,8 +238,7 @@ void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file 
             {
                 while (depthElements.back().first > depth)
                 {
-                    storage->addShortname(depths.back().second);
-                    depths.pop_back();
+                    depthElements.pop_back();
                     if (depths.empty())
                         break;
                 }
@@ -254,12 +253,53 @@ void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file 
             /// shortname ///
             if (tagContent.compare("SHORT-NAME"))
             {
-                ////////////////////////////////////////////////////
+                ShortnameElement element;
+                element.parent = nullptr;
+
+                // skip to the end of the <SHORT-NAME> tag
+                current += 11;
+
+                const char *endChar = static_cast<const char*>(memchr(current, '<', end - current));
+                std::string pathString = "";
+                for (auto i : depthElements)
+                {
+                    pathString += i.second.name + "/";
+                }
+                if(pathString.size())
+                {
+                    pathString.pop_back();
+                    element.parent = depthElements.back().second;
+                }
+                
+                element.name = std::string(current, static_cast<uint32_t>(endChar - current));
+                element.path = pathString;
+                element.charOffset = current - start;
+                depthElements.back().second->children.push_back(storage->addShortname(element));
+                depthElements.push_back(std::make_pair(depth, element));
+
+                current = endChar + 13;
             }
             /// reference ///
             else if (std::search(tagContent.begin(), tagContent.end(), searcher) != tagContent.end())
             {
-                ////////////////////////////////////////////////////
+                ReferenceElement reference;
+                reference.name = std::string(tagContent.find_first_of('\"'), tagContent.find_last_of('\"') - 1);
+
+                current = static_cast<const char *>(memchr(current, '>', end - current)) + 2;
+                const char* endOfReference = static_cast<const char*>(memchr(current, '<', end - current));
+
+                std::string refString = std::string(current, endOfReference);
+                try
+                {
+                    ShortnameElement &shortname = storage->getShortnameByFullPath(refString);
+                    reference.target = shortname;
+                    reference.charOffset = current;
+                    shortname.references.push_back(storages->addReference(reference));
+                }
+                catch (lsp::elementNotFoundException &e)
+                {
+
+                }
             }
             /// random tag - increase depth and skip ///
             else

@@ -29,7 +29,7 @@ add_executable(ARXML_LanguageServer
   src/xmlParser.cpp
   src/ioHandler.cpp
   src/languageService.cpp
-  src/shortnameStorage.cpp
+  src/arxmlStorage.cpp
   src/messageParser.cpp
   ${BOOST_MAPPED_FILE_CPP_PATH}
 )

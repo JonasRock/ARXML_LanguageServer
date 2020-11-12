@@ -60,7 +60,15 @@ public:
      */
     void preParseFile(const lsp::types::DocumentUri uri);
 
+    /**
+     * @brief Get all shortnames as tree elements that are children of the given shortname path
+     * 
+     * @param params path of parent and document uri
+     * @return std::vector<lsp::types::non_standard::ShortnameTreeElement> 
+     */
     std::vector<lsp::types::non_standard::ShortnameTreeElement> getChildren(const lsp::types::non_standard::GetChildrenParams &params);
+
+    lsp::types::Hover getHover(const lsp::types::TextDocumentPositionParams &params);
 
 private:
     std::shared_ptr<ShortnameStorage> parse(const lsp::types::DocumentUri uri);

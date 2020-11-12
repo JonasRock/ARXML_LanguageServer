@@ -45,6 +45,8 @@ private:
     static inline std::shared_ptr<XmlParser> xmlParser_ = nullptr;
 
     //Callbacks for Language Server Protocol
+
+    static jsonrpcpp::response_ptr request_textDocument_hover(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_shutdown(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_textDocument_references(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);

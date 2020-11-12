@@ -386,3 +386,16 @@ void lsp::XmlParser::preParseFile(const lsp::types::DocumentUri uri)
     parse(uri);
     return;
 }
+
+lsp::types::Hover lsp::XmlParser::getHover(const lsp::types::TextDocumentPositionParams &params)
+{
+    auto storage = parse(params.textDocument.uri);
+    auto element = storage->getByOffset(storage->getOffsetFromPosition(params.position) + 1);
+    lsp::types::Hover res;
+    res.range = lsp::types::Range {
+        storage->getPositionFromOffset(element.getOffsetRange().first - 1),
+        storage->getPositionFromOffset(element.getOffsetRange().second)
+    };
+    res.contents = element.getFullPath();
+    return res;
+}

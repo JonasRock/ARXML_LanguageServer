@@ -23,6 +23,7 @@ void lsp::LanguageService::start(std::string address, uint32_t port)
     messageParser_->register_request_callback("textDocument/definition", lsp::LanguageService::request_textDocument_definition);
     messageParser_->register_request_callback("textDocument/references", lsp::LanguageService::request_textDocument_references);
     messageParser_->register_request_callback("textDocument/documentColor", lsp::LanguageService::request_textDocument_documentColor);
+    messageParser_->register_request_callback("textDocument/hover", lsp::LanguageService::request_textDocument_hover);
     messageParser_->register_request_callback("treeView/getChildren", lsp::LanguageService::request_treeView_getChildren);
     //begin the main run loop
     run();
@@ -87,7 +88,8 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_initialize(const jsonrpcpp
         {"capabilities", {
             {"referencesProvider", true},
             {"definitionProvider", true},
-            {"colorProvider", true}
+            {"colorProvider", true},
+            {"hoverProvider", true}
         }}
     };
     return std::make_shared<jsonrpcpp::Response>(id, result);
@@ -140,6 +142,22 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_documentColor
         xmlParser_->preParseFile(p.textDocument.uri);
     }
     json result = json::array();
+    return std::make_shared<jsonrpcpp::Response>(id, result);
+}
+
+jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_hover(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+{
+    lsp::types::TextDocumentPositionParams p = params.to_json().get<lsp::types::TextDocumentPositionParams>();
+    json result;
+    try
+    {
+        result = xmlParser_->getHover(p);
+        return std::make_shared<jsonrpcpp::Response>(id, result);     
+    }
+    catch(lsp::elementNotFoundException &e)
+    {
+        result = nullptr;
+    }
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }
 

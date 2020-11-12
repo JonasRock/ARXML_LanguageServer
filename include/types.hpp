@@ -38,6 +38,13 @@ namespace types
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Location, uri, range)
 
+    struct Hover
+    {
+        std::string contents;
+        lsp::types::Range range;
+    };
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Hover, contents, range)
+
     struct LocationLink
     {
         lsp::types::Range originSelectionRange;

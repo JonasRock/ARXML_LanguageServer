@@ -17,7 +17,7 @@ else()
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEBUG} -DNO_TERMINAL_OUTPUT")
   message("Custom Settings: ReleasTerminal Logging disabled")
 endif()
-message("Custom Settings: Boost::mapped_file.cpp location: " ${BOOST_MAPPED_FILE_CPP_PATH})
+message("Custom Settings: boost::mapped_file.cpp location: " ${BOOST_MAPPED_FILE_CPP_PATH})
 
 add_executable(ARXML_LanguageServer
   src/main.cpp

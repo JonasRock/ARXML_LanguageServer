@@ -169,10 +169,107 @@ std::shared_ptr<lsp::ArxmlStorage> lsp::XmlParser::parseFull(const lsp::types::D
 
 void lsp::XmlParser::parseNewlines(boost::iostreams::mapped_file &mmap, std::shared_ptr<ArxmlStorage> storage)
 {
+    const char *const start = mmap.const_data();
+    const char *current = start;
+    const char *const end = current + mmap.size();
 
+    if (current)
+    {
+        //First, go through once and count the number, so we can reserve enough space
+        uint32_t numLines = std::count(start, end, '\n');
+        storage->reserveNewlines(numLines + 1);
+        storage->addNewlineOffset(0);
+
+        while (current && current < end)
+        {
+            current = static_cast<const char *>(memchr(current, '\n', end - current));
+            if (current)
+            {
+                storage->addNewlineOffset(current - start);
+                ++current;
+            }
+        }
+    }
 }
 
 void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file &mmap, std::shared_ptr<ArxmlStorage> storage)
 {
+    const char *const start = mmap.const_data();
+    const char *current = start;
+    const char *const end = current + mmap.size();
 
+    uint32_t depth = 0;
+    std::vector<std::pair<std::uint32_t, lsp::ShortnameElement>> depthElements;
+
+    //Preparation for reference parsing
+    const std::string searchPattern = "-REF DEST =\"";
+    std::boyer_moore_searcher searcher(searchPattern.begin(), searchPattern.end());
+
+    while (current && current < end)
+    {
+        //Go to the next tag
+        current = static_cast<const char*>(memchr(current, '<', end - current));
+        if (!current)
+            break;
+        ++current;
+
+        ///////////////////
+        /// parsing tag ///
+        ///////////////////
+
+        /// comment - skip ///
+        if(*(current) == '!')
+        {
+            current = strstr(++current, "-->") + 3;
+        }
+
+        /// xml info - skip ///
+        else if(*(current) == '?')
+        {
+            current = strstr(++current, "?>") + 2;
+        }
+
+        /// closing tag - decrease depth ///
+        else if (*(current) == '/')
+        {
+            --depth;
+            current = static_cast<const char *>(memchr(++current, '>', end - current)) + 1;
+            if (!depthElements.empty())
+            {
+                while (depthElements.back().first > depth)
+                {
+                    storage->addShortname(depths.back().second);
+                    depths.pop_back();
+                    if (depths.empty())
+                        break;
+                }
+            }
+        }
+        /// opening tag ///
+        else
+        {
+            const char* tagEnd = static_cast<const char*>(memchr(current, '>', end - current)) - 1;
+            std::string tagContent(current, tagEnd);
+
+            /// shortname ///
+            if (tagContent.compare("SHORT-NAME"))
+            {
+                ////////////////////////////////////////////////////
+            }
+            /// reference ///
+            else if (std::search(tagContent.begin(), tagContent.end(), searcher) != tagContent.end())
+            {
+                ////////////////////////////////////////////////////
+            }
+            /// random tag - increase depth and skip ///
+            else
+            {
+                current = static_cast<const char*>(memchr(current, '>', end - current)) + 1;
+                if (*(current - 2) != '/')
+                {
+                    ++depth;
+                }
+            }
+        }
+    }
 }

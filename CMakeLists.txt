@@ -10,6 +10,9 @@ set(ENABLE_RELEASE_CONSOLE_OUTPUT YES)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD_LIBRARIES "-static-libgcc -static-libstdc++ -lwsock32 -lws2_32 ${CMAKE_CXX_STANDARD_LIBRARIES}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive")
+set(BUILD_SHARED_LIBS OFF)
 SET(GCC_COVERAGE_COMPILE_FLAGS "-fdiagnostics-color")
 if (ENABLE_RELEASE_CONSOLE_OUTPUT)
   message("Custom Settings: Terminal Logging enabled")
@@ -18,6 +21,7 @@ else()
   message("Custom Settings: ReleasTerminal Logging disabled")
 endif()
 message("Custom Settings: boost::mapped_file.cpp location: " ${BOOST_MAPPED_FILE_CPP_PATH})
+
 
 add_executable(ARXML_LanguageServer
   src/main.cpp
@@ -38,5 +42,5 @@ add_subdirectory(include/extern)
 find_package(Boost 1.74.0 REQUIRED)
 if(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIRS})
-  target_link_libraries(ARXML_LanguageServer ws2_32)
+  target_link_libraries(ARXML_LanguageServer ws2_32 -static)
 endif()

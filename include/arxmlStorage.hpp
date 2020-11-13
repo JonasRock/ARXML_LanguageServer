@@ -15,6 +15,8 @@
 namespace lsp
 {
 
+struct ReferenceElement;
+// struct ShortnameElement;
 
 struct ShortnameElement
 {
@@ -34,7 +36,8 @@ struct ReferenceElement
     ShortnameElement* target;
 };
 
-//Typedef for the multi index map for the shortnames
+// Typedef for the multi index map for the shortnames
+// For random_access_indices Validity of iterators and references to elements is preserved in all operations, regardless of the capacity status.
 struct tag_fullPathIndex {};
 struct tag_offsetIndex {};
 typedef boost::multi_index_container<
@@ -58,8 +61,11 @@ public:
     const ShortnameElement &getShortnameByOffset(const uint32_t &offset) const;
     const ReferenceElement &getReferenceByOffset(const uint32_t &offset) const;
 
-    ShortnameElement* const addShortname(const ShortnameElement &elem);
-    ReferenceElement* const addReference(const ReferenceElement &elem);
+    auto addShortname(const ShortnameElement &elem);
+    const lsp::ReferenceElement* const addReference(const ReferenceElement &elem);
+    bool addChildToShortname;
+    bool addParentToShortname;
+    bool addReferenceToShortname;
     void addNewlineOffset(const uint32_t newlineOffset);
     void reserveNewlineOffsets(const uint32_t numNewlineOffsets);
     const uint32_t getOffsetFromPosition(const lsp::types::Position &position) const;

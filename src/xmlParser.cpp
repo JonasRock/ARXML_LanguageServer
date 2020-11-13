@@ -1,5 +1,5 @@
 #include "xmlParser.hpp"
-#include <iostreams>
+#include <iostream>
 
 #include "lspExceptions.hpp"
 #include "config.hpp"
@@ -143,10 +143,10 @@ std::shared_ptr<lsp::ArxmlStorage> lsp::XmlParser::parseFull(const lsp::types::D
     StorageElement newStorage;
     newStorage.lastUsedID = currentID++;
     newStorage.uri = uri;
-    newStorage.storage = std::make_shared<ShortnameStorage>();
+    newStorage.storage = std::make_shared<ArxmlStorage>();
 
-    storages.push_back(newStorage);
-    std::string sanitzedFilePath = std::string(uri.begin() + 5, uri.end());
+    storages_.push_back(newStorage);
+    std::string sanitizedFilePath = std::string(uri.begin() + 5, uri.end());
     auto repBegin = sanitizedFilePath.find("%3A");
     sanitizedFilePath.replace(repBegin, 3, ":");
     sanitizedFilePath = sanitizedFilePath.substr(repBegin - 1);
@@ -291,7 +291,7 @@ void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file 
                 std::string refString = std::string(current, endOfReference);
                 try
                 {
-                    ShortnameElement &shortname = storage->getShortnameByFullPath(refString);
+                    const ShortnameElement &shortname = storage->getShortnameByFullPath(refString);
                     reference.target = shortname;
                     reference.charOffset = current;
                     shortname.references.push_back(storages->addReference(reference));

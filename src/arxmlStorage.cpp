@@ -28,7 +28,7 @@ const lsp::ShortnameElement &lsp::ArxmlStorage::getShortnameByOffset(const uint3
     --res;
     if (offset >= (*res).charOffset && offset <= ((*res).charOffset + (*res).name.length()))
     {
-        return *res
+        return *res;
     }
     //Doesn't match, smaller than what we look for -> not found
     throw lsp::elementNotFoundException();
@@ -52,14 +52,15 @@ const lsp::ReferenceElement &lsp::ArxmlStorage::getReferenceByOffset(const uint3
     throw lsp::elementNotFoundException();
 }
 
-lsp::ShortnameElement* const lsp::ArxmlStorage::addShortname(const lsp::ShortnameElement &elem)
+auto lsp::ArxmlStorage::addShortname(const lsp::ShortnameElement &elem)
 {
-    shortnamesOffsetIndex_.emplace_hint(shortnamesOffsetIndex_.end(), elem);
+    return shortnamesOffsetIndex_.emplace_hint(shortnamesOffsetIndex_.end(), elem);
 }
 
-lsp::ReferenceElement* const lsp::ArxmlStorage::addReference(const lsp::ReferenceElement &elem)
+const lsp::ReferenceElement* const lsp::ArxmlStorage::addReference(const lsp::ReferenceElement &elem)
 {
     references_.push_back(elem);
+    return &(references_.back());
 }
 
 void lsp::ArxmlStorage::addNewlineOffset(const uint32_t newlineOffset)

@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <string>
+#include <thread>
+#include <chrono>
 
 #include "boost/asio.hpp"
 #include "boost/lexical_cast.hpp"
@@ -57,7 +59,7 @@ std::size_t lsp::IOHandler::read_(std::string &message)
 {
     while(socket_.available() < 30)
     {
-        // busy waiting
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
     /////////////////////////// Header ///////////////////////////

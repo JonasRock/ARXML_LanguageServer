@@ -23,9 +23,9 @@ struct ShortnameElement
     std::string name;
     std::string path;
     uint32_t charOffset;
-    std::vector<ShortnameElement*> children;
-    std::vector<ReferenceElement*> references;
-    ShortnameElement* parent;
+    mutable std::vector<const ShortnameElement*> children;
+    mutable std::vector<const ReferenceElement*> references;
+    const ShortnameElement* parent;
     std::string getFullPath() const;
 };
 
@@ -33,7 +33,7 @@ struct ReferenceElement
 {
     std::string name;
     uint32_t charOffset;
-    ShortnameElement* target;
+    std::string targetPath;
 };
 
 // Typedef for the multi index map for the shortnames
@@ -60,16 +60,19 @@ public:
     const ShortnameElement &getShortnameByFullPath(const std::string &fullPath) const;
     const ShortnameElement &getShortnameByOffset(const uint32_t &offset) const;
     const ReferenceElement &getReferenceByOffset(const uint32_t &offset) const;
+    std::vector<const ReferenceElement*> getReferencesByShortname(const ShortnameElement &elem) const;
+    std::vector<const lsp::ShortnameElement*> getShortnamesByPathOnly(const std::string &path) const;
 
-    auto addShortname(const ShortnameElement &elem);
+    const lsp::ShortnameElement* addShortname(const ShortnameElement &elem);
     const lsp::ReferenceElement* const addReference(const ReferenceElement &elem);
-    bool addChildToShortname;
-    bool addParentToShortname;
-    bool addReferenceToShortname;
+
     void addNewlineOffset(const uint32_t newlineOffset);
     void reserveNewlineOffsets(const uint32_t numNewlineOffsets);
+
     const uint32_t getOffsetFromPosition(const lsp::types::Position &position) const;
     const lsp::types::Position getPositionFromOffset(const uint32_t offset) const;
+
+    ArxmlStorage();
 
 private:
     shortnameContainer_t shortnames_;

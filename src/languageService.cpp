@@ -7,6 +7,7 @@
 #include "lspExceptions.hpp"
 #include "config.hpp"
 
+
 void lsp::LanguageService::start(std::string address, uint32_t port)
 {
     ioHandler_ = std::make_shared<lsp::IOHandler>(address, port);

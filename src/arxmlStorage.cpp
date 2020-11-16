@@ -4,6 +4,12 @@
 
 #include "lspExceptions.hpp"
 
+lsp::ArxmlStorage::ArxmlStorage()
+    : shortnames_(), references_(),
+      shortnamesFullPathIndex_{shortnames_.get<tag_fullPathIndex>()},
+      shortnamesOffsetIndex_{shortnames_.get<tag_offsetIndex>()}
+    {}
+
 const lsp::ShortnameElement &lsp::ArxmlStorage::getShortnameByFullPath(const std::string &fullPath) const
 {
     auto res = shortnamesFullPathIndex_.find(fullPath);
@@ -39,7 +45,7 @@ const lsp::ReferenceElement &lsp::ArxmlStorage::getReferenceByOffset(const uint3
     auto res = std::find_if(references_.begin(), references_.end(),
     [offset](const ReferenceElement &elem)
     {
-        if (offset >= elem.charOffset && offset <= (elem.charOffset + elem.name.length()))
+        if (offset >= elem.charOffset && offset <= (elem.charOffset + elem.targetPath.length()))
         {
             return true;
         }
@@ -52,9 +58,34 @@ const lsp::ReferenceElement &lsp::ArxmlStorage::getReferenceByOffset(const uint3
     throw lsp::elementNotFoundException();
 }
 
-auto lsp::ArxmlStorage::addShortname(const lsp::ShortnameElement &elem)
+std::vector<const lsp::ReferenceElement*> lsp::ArxmlStorage::getReferencesByShortname(const ShortnameElement &elem) const
 {
-    return shortnamesOffsetIndex_.emplace_hint(shortnamesOffsetIndex_.end(), elem);
+    std::vector<const lsp::ReferenceElement*> results;
+    for(auto &ref : references_)
+    {
+        if(ref.targetPath == elem.getFullPath())
+        {
+            results.push_back(&ref);
+        }
+    }
+    return results;
+}
+
+std::vector<const lsp::ShortnameElement*> lsp::ArxmlStorage::getShortnamesByPathOnly(const std::string &path) const
+{
+    std::vector<const lsp::ShortnameElement*> results;
+    for (auto &elem: shortnames_)
+    {
+        if(elem.path == path)
+            results.push_back(&elem);
+    }
+    return results;
+}
+
+const lsp::ShortnameElement* lsp::ArxmlStorage::addShortname(const lsp::ShortnameElement &elem)
+{
+    auto it = shortnamesOffsetIndex_.emplace_hint(shortnamesOffsetIndex_.end(), elem);
+    return &(*it);
 }
 
 const lsp::ReferenceElement* const lsp::ArxmlStorage::addReference(const lsp::ReferenceElement &elem)
@@ -84,4 +115,16 @@ const lsp::types::Position lsp::ArxmlStorage::getPositionFromOffset(const uint32
     ret.line = std::lower_bound(newlineOffsets_.begin(), newlineOffsets_.end(), offset) - newlineOffsets_.begin() - 1;
     ret.character = offset - newlineOffsets_[ret.line];
     return ret;
+}
+
+std::string lsp::ShortnameElement::getFullPath() const
+{
+    if(path.length())
+    {
+        return path + "/" + name;
+    }
+    else
+    {
+        return name;
+    }
 }

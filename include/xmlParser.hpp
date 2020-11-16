@@ -24,8 +24,8 @@ class XmlParser
     };
 
 public:
-    const lsp::types::Hover &getHover(const lsp::types::TextDocumentPositionParams &params);
-    const lsp::types::LocationLink &getDefinition(const lsp::types::TextDocumentPositionParams &params);
+    const lsp::types::Hover getHover(const lsp::types::TextDocumentPositionParams &params);
+    const lsp::types::LocationLink getDefinition(const lsp::types::TextDocumentPositionParams &params);
     std::vector<lsp::types::Location> getReferences(const lsp::types::ReferenceParams &params);
     std::vector<lsp::types::non_standard::ShortnameTreeElement> getChildren(const lsp::types::non_standard::GetChildrenParams &params);
 

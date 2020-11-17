@@ -42,7 +42,10 @@ const lsp::types::Hover lsp::XmlParser::getHover(const lsp::types::TextDocumentP
     result.contents += "**Full path:** " + shortname.getFullPath() + "\n";
     for (int i = 0; i < shortname.references.size() && i < 10; ++i)
     {
-        result.contents += "- **" + shortname.references[i]->name + ":** " + shortname.references[i]->targetPath + "\n";
+        lsp::ShortnameElement target = storage->getShortnameByFullPath(shortname.references[i]->targetPath);
+        std::string link = params.textDocument.uri
+            + "#L" + std::to_string(storage->getPositionFromOffset(target.charOffset).line + 1);
+        result.contents += "- **" + shortname.references[i]->name + ":** [" + shortname.references[i]->targetPath + "](" + link + ")\n";
     }
     if(shortname.references.size() > 10)
         result.contents += "- ... (" + std::to_string(shortname.references.size()) + " reference element)";
@@ -328,8 +331,10 @@ void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file 
                 std::string refString = std::string(current, endOfReference);
                 reference.targetPath = refString;
                 reference.charOffset = current - start;
+                reference.owner = nullptr;
                 if(depthElements.size())
                 {
+                    reference.owner = depthElements.back().second;
                     depthElements.back().second->references.push_back(storage->addReference(reference));
                 }
                 else

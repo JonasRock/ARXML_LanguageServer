@@ -34,6 +34,7 @@ struct ReferenceElement
     std::string name;
     uint32_t charOffset;
     std::string targetPath;
+    const ShortnameElement* owner;
 };
 
 // Typedef for the multi index map for the shortnames

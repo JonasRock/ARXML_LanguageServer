@@ -63,8 +63,8 @@ const lsp::types::LocationLink lsp::XmlParser::getDefinition(const lsp::types::T
     
     //The number of '/' between where the user clicked and where the name ends is the number of times we need to get the parent
     lsp::types::LocationLink result;
-    result.originSelectionRange.start = storage->getPositionFromOffset(reference.charOffset);
-    result.originSelectionRange.start = storage->getPositionFromOffset(reference.charOffset + reference.targetPath.length());
+    result.originSelectionRange.start = storage->getPositionFromOffset(reference.charOffset - 2);
+    result.originSelectionRange.end = storage->getPositionFromOffset(reference.charOffset + shortname.getFullPath().length() - 1);
     result.targetUri = params.textDocument.uri;
     result.targetRange.start = storage->getPositionFromOffset(shortname.charOffset);
     result.targetRange.end = storage->getPositionFromOffset(shortname.charOffset + shortname.name.length());
@@ -94,8 +94,8 @@ std::vector<lsp::types::Location> lsp::XmlParser::getReferences(const lsp::types
     {
         lsp::types::Location res;
         res.uri = params.textDocument.uri;
-        res.range.start = storage->getPositionFromOffset(ref->charOffset);
-        res.range.end = storage->getPositionFromOffset(ref->charOffset + ref->targetPath.length());
+        res.range.start = storage->getPositionFromOffset(ref->charOffset - 2);
+        res.range.end = storage->getPositionFromOffset(ref->charOffset + ref->targetPath.length() - 1);
         results.push_back(res);
     }
     if(results.size() && params.context.includeDeclaration)

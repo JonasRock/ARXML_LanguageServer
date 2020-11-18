@@ -211,4 +211,5 @@ void lsp::LanguageService::response_workspace_configuration(const json &results)
 #endif
     lsp::config::maxOpenFiles = results[0]["maxOpenFiles"].get<uint32_t>();
     lsp::config::precalculateOnOpeningFiles = results[0]["precalculateOnOpeningFiles"].get<bool>();
+    lsp::config::referenceLinkToParentShortname = results[0]["referenceLinkToParentShortname"].get<bool>();
 }

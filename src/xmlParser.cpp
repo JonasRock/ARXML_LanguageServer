@@ -90,13 +90,27 @@ std::vector<lsp::types::Location> lsp::XmlParser::getReferences(const lsp::types
         elem = helper_getShortnameFromInnerPath(storage, reference, offset);
     }
 
-    for(auto &ref: storage->getReferencesByShortname(elem))
+    if(lsp::config::referenceLinkToParentShortname)
     {
-        lsp::types::Location res;
-        res.uri = params.textDocument.uri;
-        res.range.start = storage->getPositionFromOffset(ref->charOffset - 2);
-        res.range.end = storage->getPositionFromOffset(ref->charOffset + ref->targetPath.length() - 1);
-        results.push_back(res);
+        for(auto &ref: storage->getReferencesByShortname(elem))
+        {
+            lsp::types::Location res;
+            res.uri = params.textDocument.uri;
+            res.range.start = storage->getPositionFromOffset(ref->owner->charOffset - 1);
+            res.range.end = storage->getPositionFromOffset(ref->owner->charOffset + ref->owner->name.length() - 1);
+            results.push_back(res);
+        }
+    }
+    else
+    {
+        for(auto &ref: storage->getReferencesByShortname(elem))
+        {
+            lsp::types::Location res;
+            res.uri = params.textDocument.uri;
+            res.range.start = storage->getPositionFromOffset(ref->charOffset - 2);
+            res.range.end = storage->getPositionFromOffset(ref->charOffset + ref->targetPath.length() - 1);
+            results.push_back(res);
+        }
     }
     if(results.size() && params.context.includeDeclaration)
     {
@@ -144,7 +158,7 @@ std::vector<lsp::types::non_standard::ShortnameTreeElement> lsp::XmlParser::getC
 lsp::types::Location lsp::XmlParser::getOwner(const lsp::types::non_standard::OwnerParams &params)
 {
     auto storage = parseFull(params.uri);
-    lsp::ReferenceElement elem = storage->getReferenceByOffset(storage->getOffsetFromPosition(params.pos));
+    lsp::ReferenceElement elem = storage->getReferenceByOffset(storage->getOffsetFromPosition(params.pos) + 2);
     lsp::types::Location result;
     result.uri = params.uri;
     result.range.start = storage->getPositionFromOffset(elem.owner->charOffset - 1);
@@ -364,6 +378,6 @@ void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file 
                     ++depth;
                 }
             }
-        }
+        } 
     }
 }

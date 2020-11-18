@@ -26,6 +26,7 @@ void lsp::LanguageService::start(std::string address, uint32_t port)
     messageParser_->register_request_callback("textDocument/documentColor", lsp::LanguageService::request_textDocument_documentColor);
     messageParser_->register_request_callback("textDocument/hover", lsp::LanguageService::request_textDocument_hover);
     messageParser_->register_request_callback("treeView/getChildren", lsp::LanguageService::request_treeView_getChildren);
+    messageParser_->register_request_callback("textDocument/goToOwner", lsp::LanguageService::request_textDocument_owner);
     //begin the main run loop
     run();
 }
@@ -176,6 +177,22 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_treeView_getChildren(const
     std::vector<lsp::types::non_standard::ShortnameTreeElement> resShortnames = xmlParser_->getChildren(p);
     json result = resShortnames;
     return std::make_shared<jsonrpcpp::Response>(id, result);
+}
+
+jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_owner(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+{
+    lsp::types::non_standard::OwnerParams p = params.to_json();
+    try
+    {
+        lsp::types::Location ret = xmlParser_->getOwner(p);
+        json result = ret;
+        return std::make_shared<jsonrpcpp::Response>(id, result);
+    }
+    catch (const lsp::elementNotFoundException &e)
+    {
+        json result = nullptr;
+        return std::make_shared<jsonrpcpp::Response>(id, result);
+    }
 }
 
 void lsp::LanguageService::toClient_request_workspace_configuration()

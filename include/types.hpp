@@ -116,6 +116,13 @@ namespace types
             std::string uri;
         };
         NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GetChildrenParams, path, uri)
+
+        struct OwnerParams
+        {
+            lsp::types::Position pos;
+            std::string uri;
+        };
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OwnerParams, pos, uri)
     }
 
 }

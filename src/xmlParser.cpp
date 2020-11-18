@@ -141,6 +141,17 @@ std::vector<lsp::types::non_standard::ShortnameTreeElement> lsp::XmlParser::getC
     return results;
 }
 
+lsp::types::Location lsp::XmlParser::getOwner(const lsp::types::non_standard::OwnerParams &params)
+{
+    auto storage = parseFull(params.uri);
+    lsp::ReferenceElement elem = storage->getReferenceByOffset(storage->getOffsetFromPosition(params.pos));
+    lsp::types::Location result;
+    result.uri = params.uri;
+    result.range.start = storage->getPositionFromOffset(elem.owner->charOffset - 1);
+    result.range.end = storage->getPositionFromOffset(elem.owner->charOffset + elem.owner->name.length() - 1);
+    return result;
+}
+
 void lsp::XmlParser::preParseFile(const lsp::types::DocumentUri uri)
 {
     parseFull(uri);

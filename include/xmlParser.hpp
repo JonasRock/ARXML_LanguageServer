@@ -28,6 +28,7 @@ public:
     const lsp::types::LocationLink getDefinition(const lsp::types::TextDocumentPositionParams &params);
     std::vector<lsp::types::Location> getReferences(const lsp::types::ReferenceParams &params);
     std::vector<lsp::types::non_standard::ShortnameTreeElement> getChildren(const lsp::types::non_standard::GetChildrenParams &params);
+    lsp::types::Location getOwner(const lsp::types::non_standard::OwnerParams &params);
 
     void preParseFile(const lsp::types::DocumentUri uri);
 

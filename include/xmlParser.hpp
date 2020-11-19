@@ -18,7 +18,6 @@ class XmlParser
 {
     struct StorageElement
     {
-        std::string uri;
         std::shared_ptr<lsp::ArxmlStorage> storage;
         uint32_t lastUsedID;
     };
@@ -30,12 +29,15 @@ public:
     std::vector<lsp::types::non_standard::ShortnameTreeElement> getChildren(const lsp::types::non_standard::GetChildrenParams &params);
     lsp::types::Location getOwner(const lsp::types::non_standard::OwnerParams &params);
 
-    void preParseFile(const lsp::types::DocumentUri uri);
+    void preParse(const lsp::types::DocumentUri uri);
+    void parseFullFolder(const lsp::types::DocumentUri uri);
+;
 
 private:
-    std::shared_ptr<lsp::ArxmlStorage> parseFull(const lsp::types::DocumentUri uri);
-    void parseNewlines(boost::iostreams::mapped_file &mmap, std::shared_ptr<ArxmlStorage> storage);
-    void parseShortnamesAndReferences(boost::iostreams::mapped_file &mmap, std::shared_ptr<ArxmlStorage> storage);
+    std::shared_ptr<lsp::ArxmlStorage> getStorageForUri(const lsp::types::DocumentUri uri);
+    void parseSingleFile(const std::string sanitizedFilePath, std::shared_ptr<ArxmlStorage> storage);
+    void parseNewlines(boost::iostreams::mapped_file &mmap, std::shared_ptr<ArxmlStorage> storage, uint32_t fileIndex);
+    void parseShortnamesAndReferences(boost::iostreams::mapped_file &mmap, std::shared_ptr<ArxmlStorage> storage, uint32_t fileIndex);
 
     std::list<StorageElement> storages_;
 };

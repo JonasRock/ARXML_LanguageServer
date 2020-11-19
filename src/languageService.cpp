@@ -23,7 +23,6 @@ void lsp::LanguageService::start(std::string address, uint32_t port)
     messageParser_->register_request_callback("shutdown", lsp::LanguageService::request_shutdown);
     messageParser_->register_request_callback("textDocument/definition", lsp::LanguageService::request_textDocument_definition);
     messageParser_->register_request_callback("textDocument/references", lsp::LanguageService::request_textDocument_references);
-    messageParser_->register_request_callback("textDocument/documentColor", lsp::LanguageService::request_textDocument_documentColor);
     messageParser_->register_request_callback("textDocument/hover", lsp::LanguageService::request_textDocument_hover);
     messageParser_->register_request_callback("treeView/getChildren", lsp::LanguageService::request_treeView_getChildren);
     messageParser_->register_request_callback("textDocument/goToOwner", lsp::LanguageService::request_textDocument_owner);
@@ -70,6 +69,7 @@ uint32_t getNextRequestID()
 
 void lsp::LanguageService::notification_initialized(const jsonrpcpp::Parameter &params)
 {
+    toClient_request_workspace_workspaceFolders();
     toClient_request_workspace_configuration();
 }
 
@@ -90,8 +90,12 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_initialize(const jsonrpcpp
         {"capabilities", {
             {"referencesProvider", true},
             {"definitionProvider", true},
-            {"colorProvider", true},
-            {"hoverProvider", true}
+            {"hoverProvider", true},
+            {"workspace", {
+                {"workspacefolders", {
+                    {"supported, true"}
+                }}
+            }}
         }}
     };
     return std::make_shared<jsonrpcpp::Response>(id, result);
@@ -133,17 +137,6 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_definition(co
         result = nullptr;
     }
 
-    return std::make_shared<jsonrpcpp::Response>(id, result);
-}
-
-jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_documentColor(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
-{
-    lsp::types::DocumentColorParams p = params.to_json().get<lsp::types::DocumentColorParams>();
-    if(lsp::config::precalculateOnOpeningFiles)
-    {
-        xmlParser_->preParseFile(p.textDocument.uri);
-    }
-    json result = json::array();
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }
 
@@ -212,4 +205,28 @@ void lsp::LanguageService::response_workspace_configuration(const json &results)
     lsp::config::maxOpenFiles = results[0]["maxOpenFiles"].get<uint32_t>();
     lsp::config::precalculateOnOpeningFiles = results[0]["precalculateOnOpeningFiles"].get<bool>();
     lsp::config::referenceLinkToParentShortname = results[0]["referenceLinkToParentShortname"].get<bool>();
+}
+
+void lsp::LanguageService::toClient_request_workspace_workspaceFolders()
+{
+    json paramsjson = nullptr;
+    jsonrpcpp::Id id(getNextRequestID());
+    jsonrpcpp::Request request(id, "workspace/workspaceFolders", paramsjson);
+    ioHandler_->addMessageToSend(request.to_json().dump());
+    messageParser_->register_response_callback(id.int_id(), response_workspace_workspaceFolders);
+}
+
+void lsp::LanguageService::response_workspace_workspaceFolders(const json &results)
+{
+#ifdef DEBUG_TO_CONSOLE
+    std::cout << "WorkspaceFolders received:\n" << results.dump(2) << "\n\n";
+#endif
+    if (results != nullptr)
+    {
+        for (auto result : results)
+        {
+            lsp::types::DocumentUri fileUri = result["uri"].get<std::string>();
+            xmlParser_->preParse(fileUri);
+        }
+    }
 }

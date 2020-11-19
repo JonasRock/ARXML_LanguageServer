@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "lspExceptions.hpp"
+#include "boost/tuple/tuple.hpp"
 
 lsp::ArxmlStorage::ArxmlStorage()
     : shortnames_(), references_(),
@@ -10,9 +11,9 @@ lsp::ArxmlStorage::ArxmlStorage()
       shortnamesOffsetIndex_{shortnames_.get<tag_offsetIndex>()}
     {}
 
-const lsp::ShortnameElement &lsp::ArxmlStorage::getShortnameByFullPath(const std::string &fullPath) const
+const lsp::ShortnameElement &lsp::ArxmlStorage::getShortnameByFullPath(const std::string &fullPath, const uint32_t fileIndex) const
 {
-    auto res = shortnamesFullPathIndex_.find(fullPath);
+    auto res = shortnamesFullPathIndex_.find(boost::make_tuple(fullPath, fileIndex));
     if (res != shortnamesFullPathIndex_.end())
     {
         return *res;
@@ -20,10 +21,21 @@ const lsp::ShortnameElement &lsp::ArxmlStorage::getShortnameByFullPath(const std
     else  throw lsp::elementNotFoundException();
 }
 
-const lsp::ShortnameElement &lsp::ArxmlStorage::getShortnameByOffset(const uint32_t &offset) const
+std::vector<const lsp::ShortnameElement*> lsp::ArxmlStorage::getShortnamesByFullPath(const std::string &fullPath) const
+{
+    std::vector<const lsp::ShortnameElement*> results;
+    for( auto itPair = shortnamesFullPathIndex_.equal_range(fullPath);
+        itPair.first != itPair.second; itPair.first++)
+    {
+        results.push_back(&(*itPair.first));
+    }
+    return results;
+}
+
+const lsp::ShortnameElement &lsp::ArxmlStorage::getShortnameByOffset(const uint32_t &offset, const uint32_t fileIndex) const
 {
     //Get the element with that has a higher offset that we look for
-    auto res = shortnamesOffsetIndex_.upper_bound(offset);
+    auto res = shortnamesOffsetIndex_.upper_bound(boost::make_tuple(fileIndex, offset));
 
     //First element is already higher than we look for -> not found
     if(res == shortnamesOffsetIndex_.begin())
@@ -40,12 +52,12 @@ const lsp::ShortnameElement &lsp::ArxmlStorage::getShortnameByOffset(const uint3
     throw lsp::elementNotFoundException();
 }
 
-const lsp::ReferenceElement &lsp::ArxmlStorage::getReferenceByOffset(const uint32_t &offset) const
+const lsp::ReferenceElement &lsp::ArxmlStorage::getReferenceByOffset(const uint32_t &offset, const uint32_t fileIndex) const
 {
     auto res = std::find_if(references_.begin(), references_.end(),
-    [offset](const ReferenceElement &elem)
+    [offset, fileIndex](const ReferenceElement &elem)
     {
-        if (offset >= elem.charOffset && offset <= (elem.charOffset + elem.targetPath.length()))
+        if (offset >= elem.charOffset && offset <= (elem.charOffset + elem.targetPath.length()) && elem.fileIndex == fileIndex)
         {
             return true;
         }
@@ -94,26 +106,28 @@ const lsp::ReferenceElement* const lsp::ArxmlStorage::addReference(const lsp::Re
     return &(references_.back());
 }
 
-void lsp::ArxmlStorage::addNewlineOffset(const uint32_t newlineOffset)
+void lsp::ArxmlStorage::addNewlineOffset(const uint32_t newlineOffset, const uint32_t fileIndex)
 {
-    newlineOffsets_.push_back(newlineOffset);
+    newlineOffsets_[fileIndex].push_back(newlineOffset);
 }
 
-void lsp::ArxmlStorage::reserveNewlineOffsets(const uint32_t numNewlineOffsets)
+void lsp::ArxmlStorage::reserveNewlineOffsets(const uint32_t numNewlineOffsets, const uint32_t fileIndex)
 {
-    newlineOffsets_.reserve(numNewlineOffsets);
+    newlineOffsets_[fileIndex].reserve(numNewlineOffsets);
 }
 
-const uint32_t lsp::ArxmlStorage::getOffsetFromPosition(const lsp::types::Position &position) const
+const uint32_t lsp::ArxmlStorage::getOffsetFromPosition(const lsp::types::Position &position, const uint32_t fileIndex) const
 {
-    return newlineOffsets_[position.line] + position.character;
+    return newlineOffsets_[fileIndex][position.line] + position.character;
 }
 
-const lsp::types::Position lsp::ArxmlStorage::getPositionFromOffset(const uint32_t offset) const
+const lsp::types::Position lsp::ArxmlStorage::getPositionFromOffset(const uint32_t offset, const uint32_t fileIndex) const
 {
     lsp::types::Position ret;
-    ret.line = std::lower_bound(newlineOffsets_.begin(), newlineOffsets_.end(), offset) - newlineOffsets_.begin() - 1;
-    ret.character = offset - newlineOffsets_[ret.line];
+    ret.line = std::lower_bound(
+        newlineOffsets_[fileIndex].begin(), newlineOffsets_[fileIndex].end(), offset
+    ) - newlineOffsets_[fileIndex].begin() - 1;
+    ret.character = offset - newlineOffsets_[fileIndex][ret.line];
     return ret;
 }
 

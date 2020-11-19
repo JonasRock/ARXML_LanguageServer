@@ -51,7 +51,6 @@ private:
     static jsonrpcpp::response_ptr request_shutdown(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_textDocument_references(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_textDocument_definition(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
-    static jsonrpcpp::response_ptr request_textDocument_documentColor(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_textDocument_owner(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_treeView_getChildren(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     
@@ -61,6 +60,8 @@ private:
 
     static void toClient_request_workspace_configuration();
     static void response_workspace_configuration(const json &results);
+    static void toClient_request_workspace_workspaceFolders();
+    static void response_workspace_workspaceFolders(const json &results);
 };
 
 

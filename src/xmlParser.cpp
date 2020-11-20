@@ -3,9 +3,10 @@
 #include "lspExceptions.hpp"
 #include "config.hpp"
 
+#include "boost/filesystem.hpp"
+
 #include <chrono>
 #include <iostream>
-#include <filesystem>
 #include <algorithm>
 
 const lsp::ShortnameElement &helper_getShortnameFromInnerPath(std::shared_ptr<lsp::ArxmlStorage> storage, lsp::ReferenceElement &reference, const uint32_t offset)
@@ -195,11 +196,12 @@ std::vector<lsp::types::non_standard::ShortnameTreeElement> lsp::XmlParser::getC
 lsp::types::Location lsp::XmlParser::getOwner(const lsp::types::non_standard::OwnerParams &params)
 {
     auto storage = getStorageForUri(params.uri);
-    lsp::ReferenceElement elem = storage->getReferenceByOffset(storage->getOffsetFromPosition(params.pos) + 2);
+    uint32_t fileIndex = storage->getFileIndex(helper_sanitizeUri(params.uri));
+    lsp::ReferenceElement elem = storage->getReferenceByOffset(storage->getOffsetFromPosition(params.pos, fileIndex) + 2, fileIndex);
     lsp::types::Location result;
     result.uri = params.uri;
-    result.range.start = storage->getPositionFromOffset(elem.owner->charOffset - 1);
-    result.range.end = storage->getPositionFromOffset(elem.owner->charOffset + elem.owner->name.length() - 1);
+    result.range.start = storage->getPositionFromOffset(elem.owner->charOffset - 1, fileIndex);
+    result.range.end = storage->getPositionFromOffset(elem.owner->charOffset + elem.owner->name.length() - 1, fileIndex);
     return result;
 }
 

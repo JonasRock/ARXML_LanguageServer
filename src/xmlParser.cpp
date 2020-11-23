@@ -9,6 +9,13 @@
 #include <iostream>
 #include <algorithm>
 
+const std::string helper_makeURI(std::string sanitizedFilePath)
+{
+    sanitizedFilePath.replace(1, 1, "%3A");
+    std::string ret = "file:///" + sanitizedFilePath;
+    return ret;
+}
+
 const lsp::ShortnameElement &helper_getShortnameFromInnerPath(std::shared_ptr<lsp::ArxmlStorage> storage, lsp::ReferenceElement &reference, const uint32_t offset)
 {
     uint32_t cursorDistance = offset - reference.charOffset;
@@ -63,7 +70,7 @@ const std::string helper_sanitizeUri(std::string unsanitized)
 const lsp::types::Hover lsp::XmlParser::getHover(const lsp::types::TextDocumentPositionParams &params)
 {
     auto storage = getStorageForUri(params.textDocument.uri);
-    uint32_t fileIndex = storage->getFileIndex(helper_sanitizeUri(params.textDocument.uri));
+    uint32_t fileIndex = storage->getFileIndex(params.textDocument.uri);
     uint32_t offset = storage->getOffsetFromPosition(params.position, fileIndex) + 2;
     ShortnameElement shortname;
     //Is it a shortname?
@@ -100,7 +107,7 @@ const lsp::types::Hover lsp::XmlParser::getHover(const lsp::types::TextDocumentP
 const lsp::types::LocationLink lsp::XmlParser::getDefinition(const lsp::types::TextDocumentPositionParams &params)
 {
     auto storage = getStorageForUri(params.textDocument.uri);
-    uint32_t fileIndex = storage->getFileIndex(helper_sanitizeUri(params.textDocument.uri));
+    uint32_t fileIndex = storage->getFileIndex(params.textDocument.uri);
     uint32_t offset = storage->getOffsetFromPosition(params.position, fileIndex) + 2;
     ReferenceElement reference = storage->getReferenceByOffset(offset, fileIndex);
     ShortnameElement shortname = helper_getShortnameFromInnerPath(storage, reference, offset);
@@ -109,7 +116,7 @@ const lsp::types::LocationLink lsp::XmlParser::getDefinition(const lsp::types::T
     lsp::types::LocationLink result;
     result.originSelectionRange.start = storage->getPositionFromOffset(reference.charOffset - 2, fileIndex);
     result.originSelectionRange.end = storage->getPositionFromOffset(reference.charOffset + shortname.getFullPath().length() - 1, fileIndex);
-    result.targetUri = params.textDocument.uri;
+    result.targetUri = storage->getUriFromFileIndex(shortname.fileIndex);
     result.targetRange.start = storage->getPositionFromOffset(shortname.charOffset, shortname.fileIndex);
     result.targetRange.end = storage->getPositionFromOffset(shortname.charOffset + shortname.name.length(), shortname.fileIndex);
     result.targetSelectionRange = result.targetRange;
@@ -206,7 +213,7 @@ std::vector<lsp::types::non_standard::ShortnameTreeElement> lsp::XmlParser::getC
 lsp::types::Location lsp::XmlParser::getOwner(const lsp::types::non_standard::OwnerParams &params)
 {
     auto storage = getStorageForUri(params.uri);
-    uint32_t fileIndex = storage->getFileIndex(helper_sanitizeUri(params.uri));
+    uint32_t fileIndex = storage->getFileIndex(params.uri);
     lsp::ReferenceElement elem = storage->getReferenceByOffset(storage->getOffsetFromPosition(params.pos, fileIndex) + 2, fileIndex);
     lsp::types::Location result;
     result.uri = params.uri;
@@ -222,10 +229,9 @@ void lsp::XmlParser::preParse(const lsp::types::DocumentUri uri)
 
 std::shared_ptr<lsp::ArxmlStorage> lsp::XmlParser::getStorageForUri(const lsp::types::DocumentUri uri)
 {
-    std::string sanitizedFilePath = helper_sanitizeUri(uri);
     for(auto &element: storages_)
     {
-        if(element.storage->containsFile(sanitizedFilePath))
+        if(element.storage->containsFile(uri))
         {
             element.lastUsedID = helper_getNextUsageID();
             return element.storage;
@@ -234,13 +240,13 @@ std::shared_ptr<lsp::ArxmlStorage> lsp::XmlParser::getStorageForUri(const lsp::t
     throw lsp::elementNotFoundException();
 }
 
-void lsp::XmlParser::parseSingleFile(const std::string sanitizedFilePath, std::shared_ptr<ArxmlStorage> storage)
+void lsp::XmlParser::parseSingleFile(const std::string uri, std::shared_ptr<ArxmlStorage> storage)
 {
-    storage->addFileIndex(sanitizedFilePath);
-    uint32_t fileIndex = storage->getFileIndex(sanitizedFilePath);
+    storage->addFileIndex(uri);
+    uint32_t fileIndex = storage->getFileIndex(uri);
 
-    boost::iostreams::mapped_file mmap(sanitizedFilePath, boost::iostreams::mapped_file::readonly);
-    std::cout << "Parsing " << sanitizedFilePath << "\n";
+    boost::iostreams::mapped_file mmap(helper_sanitizeUri(uri), boost::iostreams::mapped_file::readonly);
+    std::cout << "Parsing " << uri << "\n";
     auto t0 = std::chrono::high_resolution_clock::now();
     parseNewlines(mmap, storage, fileIndex);
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -269,7 +275,7 @@ void lsp::XmlParser::parseFullFolder(const lsp::types::DocumentUri uri)
         std::vector<std::string> files = helper_getARXMLFilePathsInDirectory(path);
         for( auto &file : files)
         {
-            parseSingleFile(file, newStorage.storage);
+            parseSingleFile(helper_makeURI(file), newStorage.storage);
         }
     }
     else
@@ -386,6 +392,7 @@ void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file 
                 element.name = std::string(current, static_cast<uint32_t>(endChar - current));
                 element.path = pathString;
                 element.charOffset = current - start;
+                element.fileIndex = fileIndex;
 
                 const ShortnameElement* elementPtr = storage->addShortname(element);
                 if(depthElements.size())
@@ -409,6 +416,7 @@ void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file 
                 reference.targetPath = refString;
                 reference.charOffset = current - start;
                 reference.owner = nullptr;
+                reference.fileIndex = fileIndex;
                 if(depthElements.size())
                 {
                     reference.owner = depthElements.back().second;

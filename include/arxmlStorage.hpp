@@ -84,9 +84,10 @@ public:
 
     const lsp::ShortnameElement* addShortname(const ShortnameElement &elem);
     const lsp::ReferenceElement* const addReference(const ReferenceElement &elem);
-    void addFileIndex(std::string sanitizedFilePath);
-    uint32_t getFileIndex(std::string sanitizedFilePath);
-    bool containsFile(std::string sanitizedFilePath);;
+    void addFileIndex(std::string uri);
+    uint32_t getFileIndex(std::string uri);
+    std::string getUriFromFileIndex(uint32_t fileIndex);
+    bool containsFile(std::string uri);;
 
     void addNewlineOffset(const uint32_t newlineOffset, const uint32_t fileIndex);
     void reserveNewlineOffsets(const uint32_t numNewlineOffsets, const uint32_t fileIndex);
@@ -103,7 +104,7 @@ private:
     std::deque<ReferenceElement> references_;
     std::vector<std::vector<uint32_t>> newlineOffsets_;
     //sanitizedFilePath_[fileIndex] = corresponding file path
-    std::vector<std::string> sanitizedFilePaths_;
+    std::vector<std::string> URIs_;
 };
 
 

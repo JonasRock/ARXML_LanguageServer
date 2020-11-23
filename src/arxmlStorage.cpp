@@ -144,11 +144,11 @@ std::string lsp::ShortnameElement::getFullPath() const
     }
 }
 
-uint32_t lsp::ArxmlStorage::getFileIndex(std::string sanitizedFilePath)
+uint32_t lsp::ArxmlStorage::getFileIndex(std::string uri)
 {
-    for(int i = 0; i < sanitizedFilePaths_.size(); i++)
+    for(int i = 0; i < URIs_.size(); i++)
     {
-        if(!sanitizedFilePaths_[i].compare(sanitizedFilePath))
+        if(!URIs_[i].compare(uri))
         {
             return i;
         }
@@ -156,16 +156,21 @@ uint32_t lsp::ArxmlStorage::getFileIndex(std::string sanitizedFilePath)
     throw lsp::elementNotFoundException();
 }
 
-void lsp::ArxmlStorage::addFileIndex(std::string sanitizedFilePath)
+void lsp::ArxmlStorage::addFileIndex(std::string uri)
 {
-    sanitizedFilePaths_.push_back(sanitizedFilePath);
+    URIs_.push_back(uri);
 }
 
-bool lsp::ArxmlStorage::containsFile(std::string sanitizedFilePath)
+bool lsp::ArxmlStorage::containsFile(std::string uri)
 {
-    auto pos = std::find(std::begin(sanitizedFilePaths_), std::end(sanitizedFilePaths_), sanitizedFilePath);
-    if (pos != std::end(sanitizedFilePaths_)) {
+    auto pos = std::find(std::begin(URIs_), std::end(URIs_), uri);
+    if (pos != std::end(URIs_)) {
         return true;
     }
     return false;
+}
+
+std::string lsp::ArxmlStorage::getUriFromFileIndex(uint32_t fileIndex)
+{
+    return URIs_[fileIndex];
 }

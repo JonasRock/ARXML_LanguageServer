@@ -199,9 +199,6 @@ void lsp::LanguageService::toClient_request_workspace_configuration()
 
 void lsp::LanguageService::response_workspace_configuration(const json &results)
 {
-#ifdef DEBUG_TO_CONSOLE
-    std::cout << "Configuration received:\n" << results.dump(2) << "\n\n";
-#endif
     lsp::config::maxOpenFiles = results[0]["maxOpenFiles"].get<uint32_t>();
     lsp::config::precalculateOnOpeningFiles = results[0]["precalculateOnOpeningFiles"].get<bool>();
     lsp::config::referenceLinkToParentShortname = results[0]["referenceLinkToParentShortname"].get<bool>();
@@ -218,7 +215,7 @@ void lsp::LanguageService::toClient_request_workspace_workspaceFolders()
 
 void lsp::LanguageService::response_workspace_workspaceFolders(const json &results)
 {
-#ifdef DEBUG_TO_CONSOLE
+#ifndef NO_TERMINAL_OUTPUT
     std::cout << "WorkspaceFolders received:\n" << results.dump(2) << "\n\n";
 #endif
     if (results != nullptr)
@@ -226,7 +223,7 @@ void lsp::LanguageService::response_workspace_workspaceFolders(const json &resul
         for (auto result : results)
         {
             lsp::types::DocumentUri fileUri = result["uri"].get<std::string>();
-            xmlParser_->preParse(fileUri);
+            xmlParser_->parseFullFolder(fileUri);
         }
     }
 }

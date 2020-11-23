@@ -113,6 +113,7 @@ void lsp::ArxmlStorage::addNewlineOffset(const uint32_t newlineOffset, const uin
 
 void lsp::ArxmlStorage::reserveNewlineOffsets(const uint32_t numNewlineOffsets, const uint32_t fileIndex)
 {
+    newlineOffsets_.push_back(std::vector<uint32_t>());
     newlineOffsets_[fileIndex].reserve(numNewlineOffsets);
 }
 
@@ -141,4 +142,30 @@ std::string lsp::ShortnameElement::getFullPath() const
     {
         return name;
     }
+}
+
+uint32_t lsp::ArxmlStorage::getFileIndex(std::string sanitizedFilePath)
+{
+    for(int i = 0; i < sanitizedFilePaths_.size(); i++)
+    {
+        if(!sanitizedFilePaths_[i].compare(sanitizedFilePath))
+        {
+            return i;
+        }
+    }
+    throw lsp::elementNotFoundException();
+}
+
+void lsp::ArxmlStorage::addFileIndex(std::string sanitizedFilePath)
+{
+    sanitizedFilePaths_.push_back(sanitizedFilePath);
+}
+
+bool lsp::ArxmlStorage::containsFile(std::string sanitizedFilePath)
+{
+    auto pos = std::find(std::begin(sanitizedFilePaths_), std::end(sanitizedFilePaths_), sanitizedFilePath);
+    if (pos != std::end(sanitizedFilePaths_)) {
+        return true;
+    }
+    return false;
 }

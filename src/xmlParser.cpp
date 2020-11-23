@@ -31,13 +31,13 @@ const lsp::ShortnameElement &helper_getShortnameFromInnerPath(std::shared_ptr<ls
     return (*shortname);
 }
 
-std::vector<std::string> helper_getARXMLFilePathsInDirectory(std::string directoryPath)
+std::vector<std::string> helper_getARXMLFilePathsInDirectory(boost::filesystem::path &path)
 {
     std::vector<std::string> arxmlFilesInDirectory;
-    for (const auto &entry: std::filesystem::directory_iterator(std::filesystem::path(directoryPath)))
+    for (boost::filesystem::directory_entry &entry : boost::filesystem::directory_iterator(path))
     {
-        std::string filePathString = entry.path().string();
-        if (!filePathString.substr(filePathString.length() - 6, 5).compare(".arxml"))
+        std::string filePathString = entry.path().generic_string();
+        if (!filePathString.substr(filePathString.length() - 6, 6).compare(".arxml"))
         {
             arxmlFilesInDirectory.push_back(filePathString);
         }
@@ -162,35 +162,45 @@ std::vector<lsp::types::Location> lsp::XmlParser::getReferences(const lsp::types
 
 std::vector<lsp::types::non_standard::ShortnameTreeElement> lsp::XmlParser::getChildren(const lsp::types::non_standard::GetChildrenParams &params)
 {
-    auto storage = getStorageForUri(params.uri);
     std::vector<lsp::types::non_standard::ShortnameTreeElement> results;
-    if(params.path.length())
+    try
     {
-        ShortnameElement shortname = storage->getShortnameByFullPath(params.path);
-        for (auto &elem : (shortname.children))
+        auto storage = getStorageForUri(params.uri);
+        if(params.path.length())
         {
-            lsp::types::non_standard::ShortnameTreeElement treeElem;
-            treeElem.name = elem->name;
-            treeElem.path = elem->path;
-            treeElem.cState = elem->children.size() ? 1 : 0;
-            treeElem.pos = storage->getPositionFromOffset(elem->charOffset);
-            results.push_back(treeElem);
+            auto shortnames = storage->getShortnamesByFullPath(params.path);
+            for (auto &shortname : shortnames)
+            {
+                for (auto &elem : (shortname->children))
+                {
+                    lsp::types::non_standard::ShortnameTreeElement treeElem;
+                    treeElem.name = elem->name;
+                    treeElem.path = elem->path;
+                    treeElem.cState = elem->children.size() ? 1 : 0;
+                    treeElem.pos = storage->getPositionFromOffset(elem->charOffset, elem->fileIndex);
+                    results.push_back(treeElem);
+                }
+            }
         }
+        else
+        {
+            auto matching = storage->getShortnamesByPathOnly(params.path);
+            for( auto &elem : matching)
+            {
+                lsp::types::non_standard::ShortnameTreeElement treeElem;
+                treeElem.name = elem->name;
+                treeElem.path = elem->path;
+                treeElem.cState = elem->children.size() ? 1 : 0;
+                treeElem.pos = storage->getPositionFromOffset(elem->charOffset, elem->fileIndex);
+                results.push_back(treeElem);
+            }
+        }
+        return results;
     }
-    else
+    catch (const lsp::elementNotFoundException &e)
     {
-        auto matching = storage->getShortnamesByPathOnly(params.path);
-        for( auto &elem : matching)
-        {
-            lsp::types::non_standard::ShortnameTreeElement treeElem;
-            treeElem.name = elem->name;
-            treeElem.path = elem->path;
-            treeElem.cState = elem->children.size() ? 1 : 0;
-            treeElem.pos = storage->getPositionFromOffset(elem->charOffset);
-            results.push_back(treeElem);
-        }
+        return results;
     }
-    return results;
 }
 
 lsp::types::Location lsp::XmlParser::getOwner(const lsp::types::non_standard::OwnerParams &params)
@@ -248,24 +258,25 @@ void lsp::XmlParser::parseFullFolder(const lsp::types::DocumentUri uri)
     auto colonPos = sanitizedFilePath.find("%3A");
     sanitizedFilePath.replace(colonPos, 3, ":");
     sanitizedFilePath = sanitizedFilePath.substr(colonPos - 1);
-    std::filesystem::path path(sanitizedFilePath);
+    boost::filesystem::path path(sanitizedFilePath);
 
     StorageElement newStorage;
     newStorage.lastUsedID = helper_getNextUsageID();
     newStorage.storage = std::make_shared<lsp::ArxmlStorage>();
 
-    if(std::filesystem::is_directory(path))
+    if(boost::filesystem::is_directory(path))
     {
-        std::vector<std::string> files = helper_getARXMLFilePathsInDirectory(sanitizedFilePath);
+        std::vector<std::string> files = helper_getARXMLFilePathsInDirectory(path);
         for( auto &file : files)
         {
-            parseSingleFile(sanitizedFilePath, newStorage.storage);
+            parseSingleFile(file, newStorage.storage);
         }
     }
     else
     {
         throw lsp::elementNotFoundException();
     }
+    storages_.push_back(newStorage);
 }
 
 void lsp::XmlParser::parseNewlines(boost::iostreams::mapped_file &mmap, std::shared_ptr<ArxmlStorage> storage, uint32_t fileIndex)

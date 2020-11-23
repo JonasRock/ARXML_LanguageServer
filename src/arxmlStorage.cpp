@@ -83,13 +83,22 @@ std::vector<const lsp::ReferenceElement*> lsp::ArxmlStorage::getReferencesByShor
     return results;
 }
 
-std::vector<const lsp::ShortnameElement*> lsp::ArxmlStorage::getShortnamesByPathOnly(const std::string &path) const
+std::vector<const lsp::ShortnameElement*> lsp::ArxmlStorage::getUniqueShortnamesByPathOnly(const std::string &path) const
 {
     std::vector<const lsp::ShortnameElement*> results;
     for (auto &elem: shortnames_)
     {
         if(elem.path == path)
-            results.push_back(&elem);
+        {
+            bool duplicate = false;
+            for (auto &result : results)
+            {
+                if(result->name == elem.name)
+                    duplicate = true;
+            }
+            if(!duplicate)
+                results.push_back(&elem);
+        }
     }
     return results;
 }

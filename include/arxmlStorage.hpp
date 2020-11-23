@@ -80,7 +80,7 @@ public:
     std::vector<const lsp::ShortnameElement*> getShortnamesByFullPath(const std::string &fullPath) const;
 
     std::vector<const ReferenceElement*> getReferencesByShortname(const ShortnameElement &elem) const;
-    std::vector<const lsp::ShortnameElement*> getShortnamesByPathOnly(const std::string &path) const;
+    std::vector<const lsp::ShortnameElement*> getUniqueShortnamesByPathOnly(const std::string &path) const;
 
     const lsp::ShortnameElement* addShortname(const ShortnameElement &elem);
     const lsp::ReferenceElement* const addReference(const ReferenceElement &elem);

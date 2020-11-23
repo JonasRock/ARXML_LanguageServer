@@ -191,7 +191,7 @@ std::vector<lsp::types::non_standard::ShortnameTreeElement> lsp::XmlParser::getC
         }
         else
         {
-            auto matching = storage->getShortnamesByPathOnly(params.path);
+            auto matching = storage->getUniqueShortnamesByPathOnly(params.path);
             for( auto &elem : matching)
             {
                 lsp::types::non_standard::ShortnameTreeElement treeElem;

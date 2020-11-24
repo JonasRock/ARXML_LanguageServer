@@ -166,6 +166,7 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_treeView_getChildren(const
     {
         p.uri = (params.to_json())["uri"];
         p.path = "";
+        p.unique = (params.to_json())["unique"].get<bool>();
     }
     std::vector<lsp::types::non_standard::ShortnameTreeElement> resShortnames = xmlParser_->getChildren(p);
     json result = resShortnames;
@@ -226,4 +227,12 @@ void lsp::LanguageService::response_workspace_workspaceFolders(const json &resul
             xmlParser_->parseFullFolder(fileUri);
         }
     }
+    json params = {{"event", "treeViewReady"}};
+    toClient_notification_telemetry_event(params);
+}
+
+void lsp::LanguageService::toClient_notification_telemetry_event(const json &params)
+{
+    jsonrpcpp::Notification notification("telemetry/event", params);
+    ioHandler_->addMessageToSend(notification.to_json().dump());
 }

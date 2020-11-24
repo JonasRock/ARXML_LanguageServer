@@ -62,6 +62,7 @@ private:
     static void response_workspace_configuration(const json &results);
     static void toClient_request_workspace_workspaceFolders();
     static void response_workspace_workspaceFolders(const json &results);
+    static void toClient_notification_telemetry_event(const json &params);
 };
 
 

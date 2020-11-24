@@ -116,8 +116,9 @@ namespace types
         {
             std::string path;
             std::string uri;
+            bool unique;
         };
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GetChildrenParams, path, uri)
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GetChildrenParams, path, uri, unique)
 
         struct OwnerParams
         {

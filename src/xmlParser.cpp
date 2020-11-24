@@ -176,14 +176,17 @@ std::vector<lsp::types::non_standard::ShortnameTreeElement> lsp::XmlParser::getC
         auto shortnames = storage->getShortnamesByPathOnly(params.path);
         for (auto &shortname : shortnames)
         {
-            //Check for duplicates
             bool duplicate = false;
-            for(auto &result : results)
+            if (!params.unique)
             {
-                if (!result.name.compare(shortname->name))
+                //Check for duplicates. No duplicates are possible if the path is unique already
+                for(auto &result : results)
                 {
-                    result.unique = false;
-                    duplicate = true;
+                    if (!result.name.compare(shortname->name))
+                    {
+                        result.unique = false;
+                        duplicate = true;
+                    }
                 }
             }
             if(!duplicate)
@@ -233,7 +236,13 @@ std::shared_ptr<lsp::ArxmlStorage> lsp::XmlParser::getStorageForUri(const lsp::t
             return element.storage;
         }      
     }
-    throw lsp::elementNotFoundException();
+    //Need to make sure this only happens when the files in the workspace folder are parsed already, else this file will get its own storage
+    StorageElement newStorage;
+    newStorage.lastUsedID = helper_getNextUsageID();
+    newStorage.storage = std::make_shared<lsp::ArxmlStorage>();
+    parseSingleFile(uri, newStorage.storage);
+    storages_.push_back(newStorage);
+    return newStorage.storage;
 }
 
 void lsp::XmlParser::parseSingleFile(const std::string uri, std::shared_ptr<ArxmlStorage> storage)

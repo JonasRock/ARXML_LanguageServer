@@ -6,7 +6,7 @@
 #include "boost/tuple/tuple.hpp"
 
 lsp::ArxmlStorage::ArxmlStorage()
-    : shortnames_(), references_(),
+    : shortnames_(),
       shortnamesFullPathIndex_{shortnames_.get<tag_fullPathIndex>()},
       shortnamesOffsetIndex_{shortnames_.get<tag_offsetIndex>()}
     {}
@@ -109,7 +109,7 @@ const lsp::ShortnameElement* lsp::ArxmlStorage::addShortname(const lsp::Shortnam
     return &(*it);
 }
 
-const lsp::ReferenceElement* const lsp::ArxmlStorage::addReference(const lsp::ReferenceElement &elem)
+const lsp::ReferenceElement* lsp::ArxmlStorage::addReference(const lsp::ReferenceElement &elem)
 {
     references_.push_back(elem);
     return &(references_.back());
@@ -126,7 +126,7 @@ void lsp::ArxmlStorage::reserveNewlineOffsets(const uint32_t numNewlineOffsets, 
     newlineOffsets_[fileIndex].reserve(numNewlineOffsets);
 }
 
-const uint32_t lsp::ArxmlStorage::getOffsetFromPosition(const lsp::types::Position &position, const uint32_t fileIndex) const
+uint32_t lsp::ArxmlStorage::getOffsetFromPosition(const lsp::types::Position &position, const uint32_t fileIndex) const
 {
     return newlineOffsets_[fileIndex][position.line] + position.character;
 }
@@ -155,7 +155,7 @@ std::string lsp::ShortnameElement::getFullPath() const
 
 uint32_t lsp::ArxmlStorage::getFileIndex(std::string uri)
 {
-    for(int i = 0; i < URIs_.size(); i++)
+    for(uint32_t i = 0; i < URIs_.size(); i++)
     {
         if(!URIs_[i].compare(uri))
         {

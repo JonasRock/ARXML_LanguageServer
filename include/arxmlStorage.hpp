@@ -83,7 +83,7 @@ public:
     std::vector<const lsp::ShortnameElement*> getUniqueShortnamesByPathOnly(const std::string &path) const;
 
     const lsp::ShortnameElement* addShortname(const ShortnameElement &elem);
-    const lsp::ReferenceElement* const addReference(const ReferenceElement &elem);
+    const lsp::ReferenceElement* addReference(const ReferenceElement &elem);
     void addFileIndex(std::string uri);
     uint32_t getFileIndex(std::string uri);
     std::string getUriFromFileIndex(uint32_t fileIndex);
@@ -92,7 +92,7 @@ public:
     void addNewlineOffset(const uint32_t newlineOffset, const uint32_t fileIndex);
     void reserveNewlineOffsets(const uint32_t numNewlineOffsets, const uint32_t fileIndex);
 
-    const uint32_t getOffsetFromPosition(const lsp::types::Position &position, const uint32_t fileIndex) const;
+    uint32_t getOffsetFromPosition(const lsp::types::Position &position, const uint32_t fileIndex) const;
     const lsp::types::Position getPositionFromOffset(const uint32_t offset, const uint32_t fileIndex) const;
 
     ArxmlStorage();

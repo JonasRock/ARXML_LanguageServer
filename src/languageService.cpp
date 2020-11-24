@@ -67,24 +67,24 @@ uint32_t getNextRequestID()
 
 //Callback implementations
 
-void lsp::LanguageService::notification_initialized(const jsonrpcpp::Parameter &params)
+void lsp::LanguageService::notification_initialized(const jsonrpcpp::Parameter &params __attribute__((unused)))
 {
     toClient_request_workspace_workspaceFolders();
     toClient_request_workspace_configuration();
 }
 
-void lsp::LanguageService::notification_exit(const jsonrpcpp::Parameter &params)
+void lsp::LanguageService::notification_exit(const jsonrpcpp::Parameter &params __attribute__((unused)))
 {
     lsp::config::shutdown = true;
     //exit
 }
 
-void lsp::LanguageService::notification_special_cancelRequest(const jsonrpcpp::Parameter &params)
+void lsp::LanguageService::notification_special_cancelRequest(const jsonrpcpp::Parameter &params __attribute__((unused)))
 {
     //do nothing
 }
 
-jsonrpcpp::response_ptr lsp::LanguageService::request_initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+jsonrpcpp::response_ptr lsp::LanguageService::request_initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params __attribute__((unused)))
 {
     json result = {
         {"capabilities", {
@@ -101,7 +101,7 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_initialize(const jsonrpcpp
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }
 
-jsonrpcpp::response_ptr lsp::LanguageService::request_shutdown(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+jsonrpcpp::response_ptr lsp::LanguageService::request_shutdown(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params __attribute__((unused)))
 {
     json result = nullptr;
     return std::make_shared<jsonrpcpp::Response>(id, result);

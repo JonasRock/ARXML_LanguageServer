@@ -27,7 +27,7 @@ const lsp::ShortnameElement &helper_getShortnameFromInnerPath(std::shared_ptr<ls
     const lsp::ShortnameElement* shortname = shortnames[0];
     std::string fullPath = shortname->getFullPath();
     uint32_t num = std::count(fullPath.begin() + cursorDistance, fullPath.end(), '/');
-    for(int i = 0; i < num; i++)
+    for(uint32_t i = 0; i < num; i++)
     {
         if(shortname->parent == nullptr)
         {
@@ -52,7 +52,7 @@ std::vector<std::string> helper_getARXMLFilePathsInDirectory(boost::filesystem::
     return arxmlFilesInDirectory;
 }
 
-const uint32_t helper_getNextUsageID()
+uint32_t helper_getNextUsageID()
 {
     static uint32_t currentID = 0;
     return currentID++;
@@ -86,7 +86,7 @@ const lsp::types::Hover lsp::XmlParser::getHover(const lsp::types::TextDocumentP
     }
     lsp::types::Hover result;
     result.contents += "**Full path:** " + shortname.getFullPath() + "\n";
-    for (int i = 0; i < shortname.references.size() && i < 10; ++i)
+    for (uint32_t i = 0; i < shortname.references.size() && i < 10; ++i)
     {
         auto targets = storage->getShortnamesByFullPath(shortname.references[i]->targetPath);
         if(targets.size() == 1)
@@ -338,20 +338,23 @@ void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file 
         /// comment - skip ///
         if(*(current) == '!')
         {
-            current = strstr(++current, "-->") + 3;
+            ++current;
+            current = strstr(current, "-->") + 3;
         }
 
         /// xml info - skip ///
         else if(*(current) == '?')
         {
-            current = strstr(++current, "?>") + 2;
+            ++current;
+            current = strstr(current, "?>") + 2;
         }
 
         /// closing tag - decrease depth ///
         else if (*(current) == '/')
         {
             --depth;
-            current = static_cast<const char *>(memchr(++current, '>', end - current)) + 1;
+            ++current;
+            current = static_cast<const char *>(memchr(current, '>', end - current)) + 1;
             if (!depthElements.empty())
             {
                 while (depthElements.back().first > depth)

@@ -43,6 +43,8 @@ add_executable(ARXML_LanguageServer
   add_subdirectory(include/extern)
   target_link_libraries(ARXML_LanguageServer PUBLIC ws2_32 -static)
 
+  target_compile_options(ARXML_LanguageServer PRIVATE -Werror -Wall -Wextra)
+
   # Boost
   set(Boost_USE_STATIC_LIBS ON)
   set(Boost_USE_MULTITHREADED ON)

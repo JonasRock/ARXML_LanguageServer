@@ -44,7 +44,7 @@ const lsp::ShortnameElement &lsp::ArxmlStorage::getShortnameByOffset(const uint3
     }
     //Now we can look if the previous element matches
     --res;
-    if (offset >= (*res).charOffset && offset <= ((*res).charOffset + (*res).name.length()))
+    if (offset >= (*res).charOffset && offset <= ((*res).charOffset + (*res).name.length() + 1))
     {
         return *res;
     }
@@ -83,21 +83,14 @@ std::vector<const lsp::ReferenceElement*> lsp::ArxmlStorage::getReferencesByShor
     return results;
 }
 
-std::vector<const lsp::ShortnameElement*> lsp::ArxmlStorage::getUniqueShortnamesByPathOnly(const std::string &path) const
+std::vector<const lsp::ShortnameElement*> lsp::ArxmlStorage::getShortnamesByPathOnly(const std::string &path) const
 {
     std::vector<const lsp::ShortnameElement*> results;
     for (auto &elem: shortnames_)
     {
         if(elem.path == path)
         {
-            bool duplicate = false;
-            for (auto &result : results)
-            {
-                if(result->name == elem.name)
-                    duplicate = true;
-            }
-            if(!duplicate)
-                results.push_back(&elem);
+            results.push_back(&elem);
         }
     }
     return results;

@@ -106,9 +106,11 @@ namespace types
             std::string name;
             std::string path;
             lsp::types::Position pos;
+            std::string uri;
             uint8_t cState;
+            bool unique;
         };
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ShortnameTreeElement, name, path, pos, cState)
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ShortnameTreeElement, name, path, pos, uri, cState, unique)
 
         struct GetChildrenParams
         {

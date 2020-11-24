@@ -147,7 +147,7 @@ std::vector<lsp::types::Location> lsp::XmlParser::getReferences(const lsp::types
         for(auto &ref: storage->getReferencesByShortname(elem))
         {
             lsp::types::Location res;
-            res.uri = params.textDocument.uri;
+            res.uri = storage->getUriFromFileIndex(ref->fileIndex);
             res.range.start = storage->getPositionFromOffset(ref->owner->charOffset - 1, ref->owner->fileIndex);
             res.range.end = storage->getPositionFromOffset(ref->owner->charOffset + ref->owner->name.length() - 1, ref->owner->fileIndex);
             results.push_back(res);
@@ -173,33 +173,29 @@ std::vector<lsp::types::non_standard::ShortnameTreeElement> lsp::XmlParser::getC
     try
     {
         auto storage = getStorageForUri(params.uri);
-        if(params.path.length())
+        auto shortnames = storage->getShortnamesByPathOnly(params.path);
+        for (auto &shortname : shortnames)
         {
-            auto shortnames = storage->getShortnamesByFullPath(params.path);
-            for (auto &shortname : shortnames)
+            //Check for duplicates
+            bool duplicate = false;
+            for(auto &result : results)
             {
-                for (auto &elem : (shortname->children))
+                if (!result.name.compare(shortname->name))
                 {
-                    lsp::types::non_standard::ShortnameTreeElement treeElem;
-                    treeElem.name = elem->name;
-                    treeElem.path = elem->path;
-                    treeElem.cState = elem->children.size() ? 1 : 0;
-                    treeElem.pos = storage->getPositionFromOffset(elem->charOffset, elem->fileIndex);
-                    results.push_back(treeElem);
+                    result.unique = false;
+                    duplicate = true;
                 }
             }
-        }
-        else
-        {
-            auto matching = storage->getUniqueShortnamesByPathOnly(params.path);
-            for( auto &elem : matching)
+            if(!duplicate)
             {
-                lsp::types::non_standard::ShortnameTreeElement treeElem;
-                treeElem.name = elem->name;
-                treeElem.path = elem->path;
-                treeElem.cState = elem->children.size() ? 1 : 0;
-                treeElem.pos = storage->getPositionFromOffset(elem->charOffset, elem->fileIndex);
-                results.push_back(treeElem);
+                lsp::types::non_standard::ShortnameTreeElement elem;
+                elem.cState = shortname->children.size() ? 1 : 0;
+                elem.name = shortname->name;
+                elem.path = shortname->path;
+                elem.pos = storage->getPositionFromOffset(shortname->charOffset, shortname->fileIndex);
+                elem.unique = true;
+                elem.uri = storage->getUriFromFileIndex(shortname->fileIndex);
+                results.push_back(elem);
             }
         }
         return results;

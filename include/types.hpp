@@ -15,7 +15,7 @@ namespace lsp
 {
 namespace types
 {
-    enum class arxmlError
+    enum arxmlError
     {
         multipleDefinitions
     };

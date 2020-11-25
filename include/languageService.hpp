@@ -54,17 +54,22 @@ private:
     static jsonrpcpp::response_ptr request_textDocument_definition(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_textDocument_owner(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_treeView_getChildren(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
-    static jsonrpcpp::response_ptr request_textDocument_color(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
+    static jsonrpcpp::response_ptr request_textDocument_documentColor(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     
     static void notification_initialized(const jsonrpcpp::Parameter &params);
     static void notification_exit(const jsonrpcpp::Parameter &params);
     static void notification_special_cancelRequest(const jsonrpcpp::Parameter &params);
 
     static void toClient_request_workspace_configuration();
-    static void response_workspace_configuration(const json &results);
     static void toClient_request_workspace_workspaceFolders();
-    static void response_workspace_workspaceFolders(const json &results);
+    static void toClient_request_client_registerCapability_color();
+
     static void toClient_notification_telemetry_event(const json &params);
+    static void toClient_notification_telemetry_event_error(const lsp::types::arxmlError error);
+
+    static void response_workspace_configuration(const json &results);
+    static void response_workspace_workspaceFolders(const json &results);
+    static void response_void(const json &results);
 };
 
 

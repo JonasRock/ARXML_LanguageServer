@@ -24,6 +24,7 @@ void lsp::LanguageService::start(std::string address, uint32_t port)
     messageParser_->register_request_callback("textDocument/definition", lsp::LanguageService::request_textDocument_definition);
     messageParser_->register_request_callback("textDocument/references", lsp::LanguageService::request_textDocument_references);
     messageParser_->register_request_callback("textDocument/hover", lsp::LanguageService::request_textDocument_hover);
+    messageParser_->register_request_callback("textDocument/documentColor", lsp::LanguageService::request_textDocument_documentColor);
     messageParser_->register_request_callback("treeView/getChildren", lsp::LanguageService::request_treeView_getChildren);
     messageParser_->register_request_callback("textDocument/goToOwner", lsp::LanguageService::request_textDocument_owner);
     //begin the main run loop
@@ -91,10 +92,10 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_initialize(const jsonrpcpp
             {"referencesProvider", true},
             {"definitionProvider", true},
             {"hoverProvider", true},
-            {"colorProvider", true},
             {"workspace", {
                 {"workspacefolders", {
-                    {"supported, true"}
+                    {"supported", true},
+                    {"changeNotifications", true}
                 }}
             }}
         }}
@@ -123,7 +124,7 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_references(co
     }
     catch(lsp::multipleDefinitionException &e)
     {
-        toClient_notification_telemetry_event(lsp::types::arxmlError::multipleDefinitions);
+        toClient_notification_telemetry_event_error(lsp::types::arxmlError::multipleDefinitions);
     }
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }
@@ -143,7 +144,7 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_definition(co
     }
     catch(lsp::multipleDefinitionException &e)
     {
-        toClient_notification_telemetry_event(lsp::types::arxmlError::multipleDefinitions);
+        toClient_notification_telemetry_event_error(lsp::types::arxmlError::multipleDefinitions);
     }
 
     return std::make_shared<jsonrpcpp::Response>(id, result);
@@ -164,7 +165,7 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_hover(const j
     }
     catch(lsp::multipleDefinitionException &e)
     {
-        toClient_notification_telemetry_event(lsp::types::arxmlError::multipleDefinitions);
+        toClient_notification_telemetry_event_error(lsp::types::arxmlError::multipleDefinitions);
     }
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }
@@ -202,7 +203,7 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_owner(const j
     }
 }
 
-jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_color(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_documentColor(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
     if (lsp::config::precalculateOnOpeningFiles)
     {
@@ -252,10 +253,40 @@ void lsp::LanguageService::response_workspace_workspaceFolders(const json &resul
     }
     json params = {{"event", "treeViewReady"}};
     toClient_notification_telemetry_event(params);
+    toClient_request_client_registerCapability_color();
 }
 
 void lsp::LanguageService::toClient_notification_telemetry_event(const json &params)
 {
     jsonrpcpp::Notification notification("telemetry/event", params);
     ioHandler_->addMessageToSend(notification.to_json().dump());
+}
+
+void lsp::LanguageService::toClient_notification_telemetry_event_error(const lsp::types::arxmlError)
+{
+    json error = {{"event", "error"}, {"error_type", lsp::types::arxmlError::multipleDefinitions}};
+    toClient_notification_telemetry_event(error);
+}
+
+void lsp::LanguageService::toClient_request_client_registerCapability_color()
+{
+    json paramsjson = {
+        {"registrations", {
+            {
+                {"id", "arxmlNavigationHelper.colorCapability"},
+                {"method", "textDocument/documentColor"},
+                {"registerOptions", {
+                    {"documentSelector", nullptr}
+                }}
+            }
+        }}
+    };
+    jsonrpcpp::Id id(getNextRequestID());
+    jsonrpcpp::Request request(id, "client/registerCapability", paramsjson);
+    ioHandler_->addMessageToSend(request.to_json().dump());
+    messageParser_->register_response_callback(id.int_id(), response_void);
+}
+
+void lsp::LanguageService::response_void(const json &results __attribute__((unused)))
+{
 }

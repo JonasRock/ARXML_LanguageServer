@@ -15,7 +15,6 @@ namespace lsp
 {
     namespace config
     {
-        extern uint32_t maxOpenFiles;
         extern bool precalculateOnOpeningFiles;
         extern bool shutdown;
         extern bool referenceLinkToParentShortname;

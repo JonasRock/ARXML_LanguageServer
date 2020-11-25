@@ -91,6 +91,7 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_initialize(const jsonrpcpp
             {"referencesProvider", true},
             {"definitionProvider", true},
             {"hoverProvider", true},
+            {"colorProvider", true},
             {"workspace", {
                 {"workspacefolders", {
                     {"supported, true"}
@@ -201,6 +202,17 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_owner(const j
     }
 }
 
+jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_color(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+{
+    if (lsp::config::precalculateOnOpeningFiles)
+    {
+        lsp::types::DocumentColorParams p = params.to_json().get<lsp::types::DocumentColorParams>();
+        xmlParser_->preParse(p.textDocument.uri);
+    }
+    json result = nullptr;
+    return std::make_shared<jsonrpcpp::Response>(id, result);
+}
+
 void lsp::LanguageService::toClient_request_workspace_configuration()
 {
     json paramsjson = lsp::types::ConfigurationParams{std::vector<lsp::types::ConfigurationItem>{{"arxmlNavigationHelper"}}};
@@ -212,7 +224,6 @@ void lsp::LanguageService::toClient_request_workspace_configuration()
 
 void lsp::LanguageService::response_workspace_configuration(const json &results)
 {
-    lsp::config::maxOpenFiles = results[0]["maxOpenFiles"].get<uint32_t>();
     lsp::config::precalculateOnOpeningFiles = results[0]["precalculateOnOpeningFiles"].get<bool>();
     lsp::config::referenceLinkToParentShortname = results[0]["referenceLinkToParentShortname"].get<bool>();
 }

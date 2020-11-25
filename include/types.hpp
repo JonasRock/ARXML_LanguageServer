@@ -15,6 +15,14 @@ namespace lsp
 {
 namespace types
 {
+    enum class arxmlError
+    {
+        multipleDefinitions
+    };
+    NLOHMANN_JSON_SERIALIZE_ENUM( arxmlError, {
+        {lsp::types::arxmlError::multipleDefinitions, "multipleDefinitions"}
+    })
+
     typedef std::string DocumentUri;
 
     struct Position

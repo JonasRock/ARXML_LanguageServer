@@ -21,6 +21,14 @@ namespace lsp
         }
     };
 
+    struct multipleDefinitionException : public std::exception
+    {
+        const char* what() const throw()
+        {
+            return "Multiple definitions not allowed in this context";
+        }
+    };
+
     struct malformedElementInsertionException : public std::exception
     {
         const char* what() const throw()

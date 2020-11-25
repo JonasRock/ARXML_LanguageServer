@@ -22,7 +22,7 @@ const lsp::ShortnameElement &helper_getShortnameFromInnerPath(std::shared_ptr<ls
     auto shortnames = (storage->getShortnamesByFullPath(reference.targetPath));
     if(shortnames.size() != 1)
     {
-        throw lsp::elementNotFoundException();
+        throw lsp::multipleDefinitionException();
     }
     const lsp::ShortnameElement* shortname = shortnames[0];
     std::string fullPath = shortname->getFullPath();

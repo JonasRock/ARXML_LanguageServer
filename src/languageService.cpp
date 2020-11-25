@@ -120,6 +120,10 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_references(co
     {
         result = nullptr;
     }
+    catch(lsp::multipleDefinitionException &e)
+    {
+        toClient_notification_telemetry_event(lsp::types::arxmlError::multipleDefinitions);
+    }
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }
 
@@ -135,6 +139,10 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_definition(co
     catch (lsp::elementNotFoundException &e)
     {
         result = nullptr;
+    }
+    catch(lsp::multipleDefinitionException &e)
+    {
+        toClient_notification_telemetry_event(lsp::types::arxmlError::multipleDefinitions);
     }
 
     return std::make_shared<jsonrpcpp::Response>(id, result);
@@ -152,6 +160,10 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_hover(const j
     catch(lsp::elementNotFoundException &e)
     {
         result = nullptr;
+    }
+    catch(lsp::multipleDefinitionException &e)
+    {
+        toClient_notification_telemetry_event(lsp::types::arxmlError::multipleDefinitions);
     }
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }

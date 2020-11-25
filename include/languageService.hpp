@@ -15,6 +15,7 @@
 #include "json.hpp"
 #include "jsonrpcpp.hpp"
 
+#include "types.hpp"
 #include "ioHandler.hpp"
 #include "messageParser.hpp"
 #include "xmlParser.hpp"

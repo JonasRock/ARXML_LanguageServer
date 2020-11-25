@@ -4,19 +4,18 @@ project(ARXML_LanguageServer VERSION 0.1)
 
 ######## Configuration Options ########
 # If YES, the server will output messages to the terminal even in release mode
-set(ENABLE_RELEASE_CONSOLE_OUTPUT YES)
+set(ENABLE_RELEASE_CONSOLE_OUTPUT NO)
 # Set your boost locations
 set(BOOST_ROOT)
 set(BOOST_LIBRARYDIR C:/boost/boost_1_74_0/stage/lib)
 set(BOOST_INCLUDEDIR C:/boost/boost_1_74_0/)
-set(Boost_ARCHITECTURE "-x64")
 
 ######## Output ########
 if (ENABLE_RELEASE_CONSOLE_OUTPUT)
-  message("Custom Settings: Terminal Logging enabled")
+message("Custom Settings: Terminal Logging enabled")
 else()
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEBUG} -DNO_TERMINAL_OUTPUT")
-  message("Custom Settings: ReleasTerminal Logging disabled")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEBUG} -DNO_TERMINAL_OUTPUT")
+message("Custom Settings: Release Terminal Logging disabled")
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
@@ -42,10 +41,11 @@ add_executable(ARXML_LanguageServer
   add_subdirectory(include)
   add_subdirectory(include/extern)
   target_link_libraries(ARXML_LanguageServer PUBLIC ws2_32 -static)
-
+  
   target_compile_options(ARXML_LanguageServer PRIVATE -Werror -Wall -Wextra)
-
+  
   # Boost
+  set(Boost_ARCHITECTURE "-x64")
   set(Boost_USE_STATIC_LIBS ON)
   set(Boost_USE_MULTITHREADED ON)
   set(Boost_USE_STATIC_RUNTIME OFF)

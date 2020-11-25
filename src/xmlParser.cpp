@@ -91,7 +91,7 @@ const lsp::types::Hover lsp::XmlParser::getHover(const lsp::types::TextDocumentP
         auto targets = storage->getShortnamesByFullPath(shortname.references[i]->targetPath);
         if(targets.size() == 1)
         {
-            std::string link = params.textDocument.uri
+            std::string link = storage->getUriFromFileIndex(targets[0]->fileIndex)
                 + "#L" + std::to_string(storage->getPositionFromOffset(targets[0]->charOffset, targets[0]->fileIndex).line + 1);
             result.contents += "- **" + shortname.references[i]->name + ":** [" + shortname.references[i]->targetPath + "](" + link + ")\n";
         }

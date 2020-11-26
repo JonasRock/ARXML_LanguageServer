@@ -158,7 +158,7 @@ std::vector<lsp::types::Location> lsp::XmlParser::getReferences(const lsp::types
         for(auto &ref: storage->getReferencesByShortname(elem))
         {
             lsp::types::Location res;
-            res.uri = params.textDocument.uri;
+            res.uri = storage->getUriFromFileIndex(ref->fileIndex);
             res.range.start = storage->getPositionFromOffset(ref->charOffset - 2, ref->fileIndex);
             res.range.end = storage->getPositionFromOffset(ref->charOffset + ref->targetPath.length() - 1, ref->fileIndex);
             results.push_back(res);

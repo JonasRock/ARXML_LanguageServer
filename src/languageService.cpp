@@ -17,16 +17,15 @@ void lsp::LanguageService::start(std::string address, uint32_t port)
     //register Callbacks here
     messageParser_->register_notification_callback("initialized", lsp::LanguageService::notification_initialized);
     messageParser_->register_notification_callback("exit", lsp::LanguageService::notification_exit);
-    messageParser_->register_notification_callback("$/cancelRequest", lsp::LanguageService::notification_special_cancelRequest);
-
+    messageParser_->register_notification_callback("workspace/didChangeConfiguration", lsp::LanguageService::notification_workspace_didChangeConfiguration);
     messageParser_->register_request_callback("initialize", lsp::LanguageService::request_initialize);
     messageParser_->register_request_callback("shutdown", lsp::LanguageService::request_shutdown);
     messageParser_->register_request_callback("textDocument/definition", lsp::LanguageService::request_textDocument_definition);
     messageParser_->register_request_callback("textDocument/references", lsp::LanguageService::request_textDocument_references);
     messageParser_->register_request_callback("textDocument/hover", lsp::LanguageService::request_textDocument_hover);
-    messageParser_->register_request_callback("textDocument/documentColor", lsp::LanguageService::request_textDocument_documentColor);
     messageParser_->register_request_callback("treeView/getChildren", lsp::LanguageService::request_treeView_getChildren);
     messageParser_->register_request_callback("textDocument/goToOwner", lsp::LanguageService::request_textDocument_owner);
+
     //begin the main run loop
     run();
 }
@@ -80,9 +79,9 @@ void lsp::LanguageService::notification_exit(const jsonrpcpp::Parameter &params 
     //exit
 }
 
-void lsp::LanguageService::notification_special_cancelRequest(const jsonrpcpp::Parameter &params __attribute__((unused)))
+void lsp::LanguageService::notification_workspace_didChangeConfiguration(const jsonrpcpp::Parameter &params __attribute__((unused)))
 {
-    //do nothing
+    lsp::LanguageService::toClient_request_workspace_configuration();
 }
 
 jsonrpcpp::response_ptr lsp::LanguageService::request_initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params __attribute__((unused)))
@@ -211,17 +210,6 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_owner(const j
     }
 }
 
-jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_documentColor(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
-{
-    if (lsp::config::precalculateOnOpeningFiles)
-    {
-        lsp::types::DocumentColorParams p = params.to_json().get<lsp::types::DocumentColorParams>();
-        xmlParser_->preParse(p.textDocument.uri);
-    }
-    json result = nullptr;
-    return std::make_shared<jsonrpcpp::Response>(id, result);
-}
-
 void lsp::LanguageService::toClient_request_workspace_configuration()
 {
     json paramsjson = lsp::types::ConfigurationParams{std::vector<lsp::types::ConfigurationItem>{{"arxmlNavigationHelper"}}};
@@ -233,7 +221,6 @@ void lsp::LanguageService::toClient_request_workspace_configuration()
 
 void lsp::LanguageService::response_workspace_configuration(const json &results)
 {
-    lsp::config::precalculateOnOpeningFiles = results[0]["precalculateOnOpeningFiles"].get<bool>();
     lsp::config::referenceLinkToParentShortname = results[0]["referenceLinkToParentShortname"].get<bool>();
 }
 
@@ -261,7 +248,7 @@ void lsp::LanguageService::response_workspace_workspaceFolders(const json &resul
     }
     json params = {{"event", "treeViewReady"}};
     toClient_notification_telemetry_event(params);
-    toClient_request_client_registerCapability_color();
+    toClient_request_client_registerCapability("workspace/didChangeConfiguration");
 }
 
 void lsp::LanguageService::toClient_notification_telemetry_event(const json &params)
@@ -276,13 +263,13 @@ void lsp::LanguageService::toClient_notification_telemetry_event_error(const lsp
     toClient_notification_telemetry_event(error);
 }
 
-void lsp::LanguageService::toClient_request_client_registerCapability_color()
+void lsp::LanguageService::toClient_request_client_registerCapability(const std::string method)
 {
     json paramsjson = {
         {"registrations", {
             {
-                {"id", "arxmlNavigationHelper.colorCapability"},
-                {"method", "textDocument/documentColor"},
+                {"id", "arxmlNavigationHelper." + method},
+                {"method", method},
                 {"registerOptions", {
                     {"documentSelector", nullptr}
                 }}

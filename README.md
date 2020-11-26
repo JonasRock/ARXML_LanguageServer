@@ -32,6 +32,7 @@ For bigger files (>50MB) VSCode disables extensions. To get around this, the ext
 - The **Tree View** can be refreshed manually by clicking the arrow on the top right
 - **Hovering** over an element in the Tree View shows you in what file the definition is located
 - **References** can be set to either link directly to the reference element or the owning element in the settings
+- **Restart the Language Server manually** by using the command "ARXML Navigation Helper: Restart Language Server"
 
 ---------------
 

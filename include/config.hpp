@@ -15,7 +15,6 @@ namespace lsp
 {
     namespace config
     {
-        extern bool precalculateOnOpeningFiles;
         extern bool shutdown;
         extern bool referenceLinkToParentShortname;
     }

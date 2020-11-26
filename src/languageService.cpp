@@ -174,17 +174,25 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_treeView_getChildren(const
 {
     lsp::types::non_standard::GetChildrenParams p;
 
-    if((params.to_json().contains("path")))
-        p = params.to_json().get<lsp::types::non_standard::GetChildrenParams>();
+    if((params.to_json().contains("uri")))
+    {
+        if((params.to_json().contains("path")))
+            p = params.to_json().get<lsp::types::non_standard::GetChildrenParams>();
+        else
+        {
+            p.uri = (params.to_json())["uri"];
+            p.path = "";
+            p.unique = (params.to_json())["unique"].get<bool>();
+        }
+        std::vector<lsp::types::non_standard::ShortnameTreeElement> resShortnames = xmlParser_->getChildren(p);
+        json result = resShortnames;
+        return std::make_shared<jsonrpcpp::Response>(id, result);
+    }
     else
     {
-        p.uri = (params.to_json())["uri"];
-        p.path = "";
-        p.unique = (params.to_json())["unique"].get<bool>();
+        json result = nullptr;
+        return std::make_shared<jsonrpcpp::Response>(id, result);
     }
-    std::vector<lsp::types::non_standard::ShortnameTreeElement> resShortnames = xmlParser_->getChildren(p);
-    json result = resShortnames;
-    return std::make_shared<jsonrpcpp::Response>(id, result);
 }
 
 jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_owner(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)

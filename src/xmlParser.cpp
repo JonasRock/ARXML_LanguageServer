@@ -95,6 +95,10 @@ const lsp::types::Hover lsp::XmlParser::getHover(const lsp::types::TextDocumentP
                 + "#L" + std::to_string(storage->getPositionFromOffset(targets[0]->charOffset, targets[0]->fileIndex).line + 1);
             result.contents += "- **" + shortname.references[i]->name + ":** [" + shortname.references[i]->targetPath + "](" + link + ")\n";
         }
+        else if(targets.size() > 1)
+        {
+            result.contents += "- **" + shortname.references[i]->name + ":** format error: multiple definitions of reference target\n";
+        }
         else throw lsp::elementNotFoundException();
     }
     if(shortname.references.size() > 10)

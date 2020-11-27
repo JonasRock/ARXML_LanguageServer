@@ -315,8 +315,19 @@ void lsp::XmlParser::parseNewlines(boost::iostreams::mapped_file &mmap, std::sha
     }
 }
 
+enum class tagType
+{
+    opening_tag,
+    closing_tag,
+    shortname,
+    reference,
+    undefined_tag,
+};
+
 void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file &mmap, std::shared_ptr<ArxmlStorage> storage, uint32_t fileIndex)
 {
+    tagType lastTag = tagType::undefined_tag;
+    tagType currentTag = tagType::undefined_tag;
     const char *const start = mmap.const_data();
     const char *current = start;
     const char *const end = current + mmap.size();
@@ -357,9 +368,18 @@ void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file 
         /// closing tag - decrease depth ///
         else if (*(current) == '/')
         {
+            if (currentTag == tagType::shortname && lastTag == tagType::opening_tag)
+            {
+                static const std::string ident_compare = "IDENT>";
+                std::string tagContent(current + 1, 6);
+                if(!ident_compare.compare(tagContent))
+                    --(depthElements.back().first);
+            }
             --depth;
             ++current;
             current = static_cast<const char *>(memchr(current, '>', end - current)) + 1;
+            //if we have the form <open><shortname>name</shortname></open> then we want to ignore the open tag in the depth calculation
+            //in order to associate name with other elements of that depth, but name would be getting removed from the depthElements because of the indentation
             if (!depthElements.empty())
             {
                 while (depthElements.back().first > depth)
@@ -369,6 +389,8 @@ void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file 
                         break;
                 }
             }
+            lastTag = currentTag;
+            currentTag = tagType::closing_tag;
         }
         /// opening tag ///
         else
@@ -410,6 +432,8 @@ void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file 
                 depthElements.push_back(std::make_pair(depth, elementPtr));
 
                 current = endChar + 13;
+                lastTag = currentTag;
+                currentTag = tagType::shortname;
             }
             /// reference ///
             else if (std::search(tagContent.begin(), tagContent.end(), searcher) != tagContent.end())
@@ -435,7 +459,8 @@ void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file 
                     storage->addReference(reference);
                 }
                 current = static_cast<const char*>(memchr(current, '>', end - current));
-                
+                lastTag = currentTag;
+                currentTag = tagType::reference;
             }
             /// random tag - increase depth and skip ///
             else
@@ -444,6 +469,8 @@ void lsp::XmlParser::parseShortnamesAndReferences(boost::iostreams::mapped_file 
                 if (*(current - 2) != '/')
                 {
                     ++depth;
+                    lastTag = currentTag;
+                    currentTag = tagType::opening_tag;
                 }
             }
         } 

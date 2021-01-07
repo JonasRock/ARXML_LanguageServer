@@ -254,17 +254,20 @@ void lsp::XmlParser::parseSingleFile(const std::string uri, std::shared_ptr<Arxm
     storage->addFileIndex(uri);
     uint32_t fileIndex = storage->getFileIndex(uri);
 
-    boost::iostreams::mapped_file mmap(helper_sanitizeUri(uri), boost::iostreams::mapped_file::readonly);
-    std::cout << "Parsing " << uri << "\n";
-    auto t0 = std::chrono::high_resolution_clock::now();
-    parseNewlines(mmap, storage, fileIndex);
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count() << "ms - Newlines\n";
-    auto t2 = std::chrono::high_resolution_clock::now();
-    parseShortnamesAndReferences(mmap, storage, fileIndex);
-    auto t3 = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count() << "ms - Shortnames/References\n\n";
-    mmap.close();
+    if (boost::filesystem::file_size(boost::filesystem::path(helper_sanitizeUri(uri))))
+    {
+        boost::iostreams::mapped_file mmap(helper_sanitizeUri(uri), boost::iostreams::mapped_file::readonly);
+        std::cout << "Parsing " << uri << "\n";
+        auto t0 = std::chrono::high_resolution_clock::now();
+        parseNewlines(mmap, storage, fileIndex);
+        auto t1 = std::chrono::high_resolution_clock::now();
+        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count() << "ms - Newlines\n";
+        auto t2 = std::chrono::high_resolution_clock::now();
+        parseShortnamesAndReferences(mmap, storage, fileIndex);
+        auto t3 = std::chrono::high_resolution_clock::now();
+        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count() << "ms - Shortnames/References\n\n";
+        mmap.close();
+    }
 }
 
 void lsp::XmlParser::parseFullFolder(const lsp::types::DocumentUri uri)

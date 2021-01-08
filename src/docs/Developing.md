@@ -92,16 +92,16 @@ For every request/notification we can receive based on our initialization, we re
 The lsp::MessageParser provides the arguments for the request to the callback, that processes the request, formulates a result and passes it back to the parser, that serializes it and passes it back to the main to be sent back out to the client via socket.
 
 The data flow can be visualized as such:
-~~~~~~~~~~~~~~~~
-Request:
 
-IOHandler -> LanguageService -> MessageParser -> callback -> XmlParser -> ArxmlStorage
-~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~
-Response:
+![](src/docs/img/LanguageServerRequestSequence.png)
 
-IOHandler <- LanguageService <- MessageParser <- callback <- XmlParser <- ArxmlStorage
-~~~~~~~~~~~~~~~~
+### Request to the Client ###
+
+The server can also request information from the client. To do this, you can add additional request to be sent back together with the original response in another callback. For example, with getting the Configuration after initialization, it works like this:
+
+![](src/docs/img/ConfigurationResponseSequence.png)
+
+A more in depth explantaion how to use this is available further down.
 
 ### Parsing the ARXML files ###
 

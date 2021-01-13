@@ -4,7 +4,7 @@ project(ARXML_LanguageServer VERSION 0.1)
 
 ######## Configuration Options ########
 # If YES, the server will output messages to the terminal even in release mode
-set(ENABLE_RELEASE_CONSOLE_OUTPUT NO)
+set(ENABLE_RELEASE_CONSOLE_OUTPUT YES)
 # Set your boost locations
 set(BOOST_ROOT)
 set(BOOST_LIBRARYDIR C:/boost/boost_1_74_0/stage/lib)

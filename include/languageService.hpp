@@ -54,6 +54,8 @@ private:
     static jsonrpcpp::response_ptr request_textDocument_definition(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_textDocument_owner(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     static jsonrpcpp::response_ptr request_treeView_getChildren(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
+    static jsonrpcpp::response_ptr request_treeView_getParentElement(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
+    static jsonrpcpp::response_ptr request_treeView_getNearestShortname(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     
     static void notification_initialized(const jsonrpcpp::Parameter &params);
     static void notification_exit(const jsonrpcpp::Parameter &params);

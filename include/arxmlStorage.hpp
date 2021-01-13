@@ -75,6 +75,7 @@ class ArxmlStorage
 public:
     const ShortnameElement &getShortnameByOffset(const uint32_t &offset, const uint32_t fileIndex) const;
     const ReferenceElement &getReferenceByOffset(const uint32_t &offset, const uint32_t fileIndex) const;
+    const ShortnameElement &getLastShortnameByOffset(const uint32_t &offset, const uint32_t fileIndex) const;
 
     const ShortnameElement &getShortnameByFullPath(const std::string &fullPath, const uint32_t fileIndex) const;
     std::vector<const lsp::ShortnameElement*> getShortnamesByFullPath(const std::string &fullPath) const;

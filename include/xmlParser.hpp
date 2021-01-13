@@ -28,6 +28,8 @@ public:
     std::vector<lsp::types::Location> getReferences(const lsp::types::ReferenceParams &params);
     std::vector<lsp::types::non_standard::ShortnameTreeElement> getChildren(const lsp::types::non_standard::GetChildrenParams &params);
     lsp::types::Location getOwner(const lsp::types::non_standard::OwnerParams &params);
+    lsp::types::non_standard::ShortnameTreeElement getNearestShortname(const lsp::types::TextDocumentPositionParams &params);
+    lsp::types::non_standard::ShortnameTreeElement getParent(const std::string path, const std::string uri);
 
     void preParse(const lsp::types::DocumentUri uri);
     void parseFullFolder(const lsp::types::DocumentUri uri);

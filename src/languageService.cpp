@@ -25,6 +25,8 @@ void lsp::LanguageService::start(std::string address, uint32_t port)
     messageParser_->register_request_callback("textDocument/hover", lsp::LanguageService::request_textDocument_hover);
     messageParser_->register_request_callback("treeView/getChildren", lsp::LanguageService::request_treeView_getChildren);
     messageParser_->register_request_callback("textDocument/goToOwner", lsp::LanguageService::request_textDocument_owner);
+    messageParser_->register_request_callback("treeView/getNearestShortname", lsp::LanguageService::request_treeView_getNearestShortname);
+    messageParser_->register_request_callback("treeView/getParentElement", lsp::LanguageService::request_treeView_getParentElement);
 
     //begin the main run loop
     run();
@@ -280,6 +282,31 @@ void lsp::LanguageService::toClient_request_client_registerCapability(const std:
     jsonrpcpp::Request request(id, "client/registerCapability", paramsjson);
     ioHandler_->addMessageToSend(request.to_json().dump());
     messageParser_->register_response_callback(id.int_id(), response_void);
+}
+
+jsonrpcpp::response_ptr lsp::LanguageService::request_treeView_getParentElement(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+{
+    json paramsjson = params.to_json();
+    std::string path = paramsjson["path"].get<std::string>();
+    std::string uri = paramsjson["uri"].get<std::string>();
+    lsp::types::non_standard::ShortnameTreeElement elem = xmlParser_->getParent(path, uri);
+    json result = nullptr;
+    if(!elem.name.compare(""))
+    {
+        return std::make_shared<jsonrpcpp::Response>(id, result);
+    }
+    result = elem;
+    return std::make_shared<jsonrpcpp::Response>(id, result);
+}
+
+jsonrpcpp::response_ptr lsp::LanguageService::request_treeView_getNearestShortname(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+{
+    json paramsjson = params.to_json();
+    lsp::types::TextDocumentPositionParams lspParams;
+    lspParams.position = paramsjson["position"].get<lsp::types::Position>();
+    lspParams.textDocument.uri =paramsjson["uri"].get<std::string>();
+    json result = xmlParser_->getNearestShortname(lspParams);
+    return std::make_shared<jsonrpcpp::Response>(id, result);
 }
 
 void lsp::LanguageService::response_void(const json &results __attribute__((unused)))

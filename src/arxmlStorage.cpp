@@ -70,6 +70,21 @@ const lsp::ReferenceElement &lsp::ArxmlStorage::getReferenceByOffset(const uint3
     throw lsp::elementNotFoundException();
 }
 
+const lsp::ShortnameElement &lsp::ArxmlStorage::getLastShortnameByOffset(const uint32_t &offset, const uint32_t fileIndex) const
+{
+    //Get the element with that has a higher offset that we look for
+    auto res = shortnamesOffsetIndex_.upper_bound(boost::make_tuple(fileIndex, offset));
+
+    //First element is already higher than we look for -> not found
+    if(res == shortnamesOffsetIndex_.begin())
+    {
+        throw lsp::elementNotFoundException();
+    }
+    //Now we can look if the previous element matches
+    return *(--res);
+}
+
+
 std::vector<const lsp::ReferenceElement*> lsp::ArxmlStorage::getReferencesByShortname(const ShortnameElement &elem) const
 {
     std::vector<const lsp::ReferenceElement*> results;

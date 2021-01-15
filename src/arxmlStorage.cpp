@@ -74,14 +74,18 @@ const lsp::ShortnameElement &lsp::ArxmlStorage::getLastShortnameByOffset(const u
 {
     //Get the element with that has a higher offset that we look for
     auto res = shortnamesOffsetIndex_.upper_bound(boost::make_tuple(fileIndex, offset));
-
     //First element is already higher than we look for -> not found
     if(res == shortnamesOffsetIndex_.begin())
     {
         throw lsp::elementNotFoundException();
     }
-    //Now we can look if the previous element matches
-    return *(--res);
+    //Now we can look for the first previous element that matches the fileindex
+    while((*(--res)).fileIndex != fileIndex)
+    {
+        if(res == shortnamesOffsetIndex_.begin())
+            throw lsp::elementNotFoundException();
+    }
+    return *res;
 }
 
 

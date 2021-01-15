@@ -227,17 +227,23 @@ lsp::types::Location lsp::XmlParser::getOwner(const lsp::types::non_standard::Ow
 
 lsp::types::non_standard::ShortnameTreeElement lsp::XmlParser::getNearestShortname(const lsp::types::TextDocumentPositionParams &params)
 {
-    auto storage = getStorageForUri(params.textDocument.uri);
-    uint32_t fileIndex = storage->getFileIndex(params.textDocument.uri);
-    auto shortname = storage->getLastShortnameByOffset(storage->getOffsetFromPosition(params.position, fileIndex), fileIndex);
     lsp::types::non_standard::ShortnameTreeElement elem;
-    elem.cState = shortname.children.size() ? 1 : 0;
-    elem.name = shortname.name;
-    elem.path = shortname.path;
-    elem.pos = storage->getPositionFromOffset(shortname.charOffset, shortname.fileIndex);
-    elem.unique = true;
-    elem.uri = storage->getUriFromFileIndex(shortname.fileIndex);
-    return elem;
+    try {
+        auto storage = getStorageForUri(params.textDocument.uri);
+        uint32_t fileIndex = storage->getFileIndex(params.textDocument.uri);
+        auto shortname = storage->getLastShortnameByOffset(storage->getOffsetFromPosition(params.position, fileIndex), fileIndex);
+        elem.cState = shortname.children.size() ? 1 : 0;
+        elem.name = shortname.name;
+        elem.path = shortname.path;
+        elem.pos = storage->getPositionFromOffset(shortname.charOffset, shortname.fileIndex);
+        elem.unique = true;
+        elem.uri = storage->getUriFromFileIndex(shortname.fileIndex);
+        return elem;
+    } catch (const lsp::elementNotFoundException &e)
+    {
+        elem.name = "";
+        return elem;
+    }
 }
 
 lsp::types::non_standard::ShortnameTreeElement lsp::XmlParser::getParent(const std::string path, const std::string uri)

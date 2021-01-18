@@ -126,6 +126,11 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_references(co
     catch(lsp::multipleDefinitionException &e)
     {
         toClient_notification_telemetry_event_error(lsp::types::arxmlError::multipleDefinitions);
+        result = nullptr;
+    }
+    catch(lsp::badUriException &e)
+    {
+        result = nullptr;
     }
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }
@@ -146,6 +151,11 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_definition(co
     catch(lsp::multipleDefinitionException &e)
     {
         toClient_notification_telemetry_event_error(lsp::types::arxmlError::multipleDefinitions);
+        result = nullptr;
+    }
+    catch(lsp::badUriException &e)
+    {
+        result = nullptr;
     }
 
     return std::make_shared<jsonrpcpp::Response>(id, result);
@@ -167,6 +177,11 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_hover(const j
     catch(lsp::multipleDefinitionException &e)
     {
         toClient_notification_telemetry_event_error(lsp::types::arxmlError::multipleDefinitions);
+        result = nullptr;
+    }
+    catch(lsp::badUriException &e)
+    {
+        result = nullptr;
     }
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }
@@ -174,26 +189,38 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_hover(const j
 jsonrpcpp::response_ptr lsp::LanguageService::request_treeView_getChildren(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
     lsp::types::non_standard::GetChildrenParams p;
-
-    if((params.to_json().contains("uri")))
-    {
-        if((params.to_json().contains("path")))
-            p = params.to_json().get<lsp::types::non_standard::GetChildrenParams>();
+    try {
+        if((params.to_json().contains("uri")))
+        {
+            if((params.to_json().contains("path")))
+                p = params.to_json().get<lsp::types::non_standard::GetChildrenParams>();
+            else
+            {
+                p.uri = (params.to_json())["uri"];
+                p.path = "";
+                p.unique = (params.to_json())["unique"].get<bool>();
+            }
+            std::vector<lsp::types::non_standard::ShortnameTreeElement> resShortnames = xmlParser_->getChildren(p);
+            json result = resShortnames;
+            return std::make_shared<jsonrpcpp::Response>(id, result);
+        }
         else
         {
-            p.uri = (params.to_json())["uri"];
-            p.path = "";
-            p.unique = (params.to_json())["unique"].get<bool>();
+            json result = nullptr;
+            return std::make_shared<jsonrpcpp::Response>(id, result);
         }
-        std::vector<lsp::types::non_standard::ShortnameTreeElement> resShortnames = xmlParser_->getChildren(p);
-        json result = resShortnames;
-        return std::make_shared<jsonrpcpp::Response>(id, result);
     }
-    else
+    catch (lsp::elementNotFoundException &e)
     {
         json result = nullptr;
         return std::make_shared<jsonrpcpp::Response>(id, result);
     }
+    catch(lsp::badUriException &e)
+    {
+        json result = nullptr;
+        return std::make_shared<jsonrpcpp::Response>(id, result);
+    }
+
 }
 
 jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_owner(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
@@ -210,6 +237,12 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_textDocument_owner(const j
         json result = nullptr;
         return std::make_shared<jsonrpcpp::Response>(id, result);
     }
+    catch(lsp::badUriException &e)
+    {
+        json result = nullptr;
+        return std::make_shared<jsonrpcpp::Response>(id, result);
+    }
+
 }
 
 void lsp::LanguageService::toClient_request_workspace_configuration()
@@ -286,27 +319,53 @@ void lsp::LanguageService::toClient_request_client_registerCapability(const std:
 
 jsonrpcpp::response_ptr lsp::LanguageService::request_treeView_getParentElement(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
-    json paramsjson = params.to_json();
-    std::string path = paramsjson["path"].get<std::string>();
-    std::string uri = paramsjson["uri"].get<std::string>();
-    lsp::types::non_standard::ShortnameTreeElement elem = xmlParser_->getParent(path, uri);
-    json result = nullptr;
-    if(!elem.name.compare(""))
-    {
+    try{
+        json paramsjson = params.to_json();
+        std::string path = paramsjson["path"].get<std::string>();
+        std::string uri = paramsjson["uri"].get<std::string>();
+        lsp::types::non_standard::ShortnameTreeElement elem = xmlParser_->getParent(path, uri);
+        json result = nullptr;
+        if(!elem.name.compare(""))
+        {
+            return std::make_shared<jsonrpcpp::Response>(id, result);
+        }
+        result = elem;
         return std::make_shared<jsonrpcpp::Response>(id, result);
     }
-    result = elem;
-    return std::make_shared<jsonrpcpp::Response>(id, result);
+    catch(lsp::badUriException &e)
+    {
+        json result = nullptr;
+        return std::make_shared<jsonrpcpp::Response>(id, result);
+    }
+    catch(lsp::elementNotFoundException &e)
+    {
+        json result = nullptr;
+        return std::make_shared<jsonrpcpp::Response>(id, result);
+    }
 }
 
 jsonrpcpp::response_ptr lsp::LanguageService::request_treeView_getNearestShortname(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
-    json paramsjson = params.to_json();
-    lsp::types::TextDocumentPositionParams lspParams;
-    lspParams.position = paramsjson["position"].get<lsp::types::Position>();
-    lspParams.textDocument.uri =paramsjson["uri"].get<std::string>();
-    json result = xmlParser_->getNearestShortname(lspParams);
-    return std::make_shared<jsonrpcpp::Response>(id, result);
+    try
+    {
+        json paramsjson = params.to_json();
+        lsp::types::TextDocumentPositionParams lspParams;
+        lspParams.position = paramsjson["position"].get<lsp::types::Position>();
+        lspParams.textDocument.uri =paramsjson["uri"].get<std::string>();
+        json result = xmlParser_->getNearestShortname(lspParams);
+        return std::make_shared<jsonrpcpp::Response>(id, result);
+    }
+    catch(lsp::badUriException &e)
+    {
+        json result = nullptr;
+        return std::make_shared<jsonrpcpp::Response>(id, result);
+    }
+    catch(lsp::elementNotFoundException &e)
+    {
+        json result = nullptr;
+        return std::make_shared<jsonrpcpp::Response>(id, result);
+    }
+
 }
 
 void lsp::LanguageService::response_void(const json &results __attribute__((unused)))

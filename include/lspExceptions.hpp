@@ -44,6 +44,14 @@ namespace lsp
             return "Could not parse JSON RPC entity";
         }
     };
+
+    struct badUriException : public std::exception
+    {
+        const char* what() const throw()
+        {
+            return "bad URI format";
+        }
+    };
 }
 
 #endif /* LSPEXCEPTIONS_H */

@@ -277,6 +277,10 @@ void lsp::XmlParser::preParse(const lsp::types::DocumentUri uri)
 
 std::shared_ptr<lsp::ArxmlStorage> lsp::XmlParser::getStorageForUri(const lsp::types::DocumentUri uri)
 {
+    if(uri.find("///", 0) == std::string::npos)
+    {
+        throw lsp::badUriException();
+    }
     for(auto &element: storages_)
     {
         if(element.storage->containsFile(uri))

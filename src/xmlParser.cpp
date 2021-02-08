@@ -102,7 +102,7 @@ const lsp::types::Hover lsp::XmlParser::getHover(const lsp::types::TextDocumentP
         else throw lsp::elementNotFoundException();
     }
     if(shortname.references.size() > 10)
-        result.contents += "- ... (" + std::to_string(shortname.references.size()) + " reference element)";
+        result.contents += "- ... (" + std::to_string(shortname.references.size()) + " reference elements)";
     result.range.start = params.position;
     result.range.end = params.position;
     return result;

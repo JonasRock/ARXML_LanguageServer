@@ -1,0 +1,11 @@
+trigger:
+- master
+
+jobs:
+- job: Windows
+  pool:
+    vmImage: 'windows-latest'
+  steps:
+    - script |
+        cmake . -DBOOST_ROOT=%BOOST_ROOT_1_72_0%
+        cmake --build .

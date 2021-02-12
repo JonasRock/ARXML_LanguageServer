@@ -10,7 +10,7 @@ jobs:
       sudo wget https://dl.bintray.com/boostorg/release/1.75.0/source/boost_1_75_0.tar.gz
       tar -zxvf boost_1_75_0.tar.gz
       cd boost_1_75_0
-      cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}`
+      cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'`
       echo "Available CPU cores: $cpuCores
       ./bootsrap.sh
       sudo ./b2 --with=all -j $cpuCores install

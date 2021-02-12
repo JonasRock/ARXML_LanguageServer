@@ -7,6 +7,8 @@ jobs:
     vmImage: 'ubuntu-latest'
   steps:
   - script: |
+      sudo add-apt-repository universe
+      sudo apt-get update
       sudo apt-get install libboost1.71-all-dev
       cmake .
       cmake --build .

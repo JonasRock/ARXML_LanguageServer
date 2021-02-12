@@ -29,10 +29,12 @@ add_executable(ARXML_LanguageServer
 if(CMAKE_COMPILER_IS_GNUCXX)
   if(WIN32)
     set(CMAKE_CXX_STANDARD_LIBRARIES "-static-libgcc -static-libstdc++ -lwsock32 -lws2_32 ${CMAKE_CXX_STANDARD_LIBRARIES}")
+    target_link_libraries(ARXML_LanguageServer PUBLIC ws2_32 -static)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,--whole-archive -lwinpthread,--no-whole-archive")
   else()
     set(CMAKE_CXX_STANDARD_LIBRARIES "-static-libgcc -static-libstdc++ ${CMAKE_CXX_STANDARD_LIBRARIES}")
   endif()
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,--whole-archive,--no-whole-archive")
   target_compile_options(ARXML_LanguageServer PRIVATE -Werror -Wall -Wextra)
 elseif(MSVC)
   target_compile_options(ARXML_LanguageServer PRIVATE /std:c++17)
@@ -44,7 +46,6 @@ target_include_directories(ARXML_LanguageServer PUBLIC include/extern)
 add_subdirectory(src)
 add_subdirectory(include)
 add_subdirectory(include/extern)
-target_link_libraries(ARXML_LanguageServer PUBLIC ws2_32 -static)
 
 
 # Boost

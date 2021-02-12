@@ -2,10 +2,11 @@ trigger:
 - master
 
 jobs:
-- job: Windows
+- job: Ubuntu
   pool:
-    vmImage: 'vs2017-win2016'
+    vmImage: 'ubuntu-latest'
   steps:
-    - script |
-        cmake . -DBOOST_ROOT=%BOOST_ROOT_1_72_0%
-        cmake --build .
+  - script: |
+      sudo apt-get install libboost-all-dev
+      cmake .
+      cmake --build .

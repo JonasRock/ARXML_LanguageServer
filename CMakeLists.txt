@@ -37,7 +37,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   endif()
   target_compile_options(ARXML_LanguageServer PRIVATE -static -Werror -Wall -Wextra)
 elseif(MSVC)
-  target_compile_options(ARXML_LanguageServer PRIVATE /std:c++17)
+  target_compile_options(ARXML_LanguageServer PRIVATE /std:c++17 /nr:false)
 endif()
 set(BUILD_SHARED_LIBS OFF)
 

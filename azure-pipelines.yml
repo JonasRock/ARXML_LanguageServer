@@ -19,5 +19,5 @@ jobs:
   - script: |
       mkdir build
       cd build
-      cmake .. -G"MinGW Makefiles" -DBOOST_ROOT=%BOOST_ROOT_1_72_0%
-      mingw32-make.exe
+      cmake .. -DBOOST_ROOT=%BOOST_ROOT_1_72_0%
+      cmake --build  ..

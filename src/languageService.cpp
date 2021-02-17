@@ -69,24 +69,24 @@ uint32_t getNextRequestID()
 
 //Callback implementations
 
-void lsp::LanguageService::notification_initialized(const jsonrpcpp::Parameter &params __attribute__((unused)))
+void lsp::LanguageService::notification_initialized([[maybe_unused]] const jsonrpcpp::Parameter &params)
 {
     toClient_request_workspace_workspaceFolders();
     toClient_request_workspace_configuration();
 }
 
-void lsp::LanguageService::notification_exit(const jsonrpcpp::Parameter &params __attribute__((unused)))
+void lsp::LanguageService::notification_exit([[maybe_unused]] const jsonrpcpp::Parameter &params)
 {
     lsp::config::shutdown = true;
     //exit
 }
 
-void lsp::LanguageService::notification_workspace_didChangeConfiguration(const jsonrpcpp::Parameter &params __attribute__((unused)))
+void lsp::LanguageService::notification_workspace_didChangeConfiguration([[maybe_unused]] const jsonrpcpp::Parameter &params)
 {
     lsp::LanguageService::toClient_request_workspace_configuration();
 }
 
-jsonrpcpp::response_ptr lsp::LanguageService::request_initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params __attribute__((unused)))
+jsonrpcpp::response_ptr lsp::LanguageService::request_initialize(const jsonrpcpp::Id &id, [[maybe_unused]] const jsonrpcpp::Parameter &params)
 {
     json result = {
         {"capabilities", {
@@ -104,7 +104,7 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_initialize(const jsonrpcpp
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }
 
-jsonrpcpp::response_ptr lsp::LanguageService::request_shutdown(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params __attribute__((unused)))
+jsonrpcpp::response_ptr lsp::LanguageService::request_shutdown(const jsonrpcpp::Id &id, [[maybe_unused]] const jsonrpcpp::Parameter &params)
 {
     json result = nullptr;
     return std::make_shared<jsonrpcpp::Response>(id, result);
@@ -368,6 +368,6 @@ jsonrpcpp::response_ptr lsp::LanguageService::request_treeView_getNearestShortna
 
 }
 
-void lsp::LanguageService::response_void(const json &results __attribute__((unused)))
+void lsp::LanguageService::response_void([[maybe_unused]] const json &results)
 {
 }

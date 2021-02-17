@@ -12,6 +12,17 @@ jobs:
       sudo apt-get install libboost1.71-all-dev
       cmake .
       cmake --build .
+      
+  - task: GitHubRelease@0
+    inputs:
+      gitHubConnection: jonasrock
+      repositoryName: '$(Build.Repository.Name)' 
+      action: 'edit'
+      tag: CI Release
+      assets: $(Build.ArtifactStagingDirectory)/build/*
+      isDraft: true
+
+
 - job: Windows
   pool:
     vmImage: 'windows-latest'

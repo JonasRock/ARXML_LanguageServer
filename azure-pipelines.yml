@@ -10,7 +10,9 @@ jobs:
       sudo add-apt-repository universe
       sudo apt-get update
       sudo apt-get install libboost1.71-all-dev
-      cmake .
+      mkdir build
+      cd build
+      cmake ..
       cmake --build .
       
   - task: CopyFiles@2

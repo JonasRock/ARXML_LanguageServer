@@ -13,14 +13,17 @@ jobs:
       cmake .
       cmake --build .
       
-  - task: GitHubRelease@0
+  - task: CopyFiles@2
     inputs:
-      gitHubConnection: jonasrock
-      repositoryName: '$(Build.Repository.Name)' 
-      action: 'edit'
-      tag: CI Release
-      assets: $(Build.ArtifactStagingDirectory)/build/*
-      isDraft: true
+      sourceFolder: '$(Build.SourcesDirectory)/build'
+      contents: 'ARXML_LanguageServer'
+      targetFolder: '$(Build.ArtifactStagingDirectory)'
+  
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: 'Executable_Linux'
+
 
 
 - job: Windows

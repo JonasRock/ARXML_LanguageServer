@@ -1238,7 +1238,7 @@ inline entity_ptr Parser::do_parse(const std::string& json_str)
 {
     try
     {
-        return do_parse_json(Json::parse(json_str.begin(), json_str.end()));
+        return do_parse_json(Json::parse(json_str.c_str()));
     }
     catch (const RpcException& e)
     {

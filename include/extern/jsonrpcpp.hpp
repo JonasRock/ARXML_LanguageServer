@@ -26,6 +26,7 @@
 #include <cstring>
 #include <exception>
 #include <string>
+#include <sstream>
 #include <vector>
 
 
@@ -1238,7 +1239,8 @@ inline entity_ptr Parser::do_parse(const std::string& json_str)
 {
     try
     {
-        return do_parse_json(Json::parse(json_str));
+        std::istringstream stream(json_str);
+        return do_parse_json(Json::parse(stream));
     }
     catch (const RpcException& e)
     {

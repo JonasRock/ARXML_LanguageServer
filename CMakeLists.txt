@@ -15,7 +15,7 @@ add_executable(ARXML_LanguageServer
 )
 
 if(MSVC)
-    target_compile_options(ARXML_LanguageServer PUBLIC /std:c++17 /nr:false)
+    target_compile_options(ARXML_LanguageServer PUBLIC /std:c++17 /nr:false /o2)
 elseif(CMAKE_COMPILER_IS_GNUCXX)
     target_compile_options(ARXML_LanguageServer PUBLIC -static -Wall -Wextra)
 endif()

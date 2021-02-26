@@ -13,19 +13,22 @@ This project has 3 dependencies
 
 ## How to build ##
 
-This project was created on Windows 64bit and is not tested to compile/work on other systems but will probably work after some configuration, as all dependencies and the project's sources are cross-platform.
+The Server can be built on Windows using MinGW (I can't get it to compile with MSVC) and on Linux using GCC.
 
 [CMake](https://cmake.org) is used to build the project together with the [mingw-w64](http://mingw-w64.org/doku.php/start) toolchain.
 
 You can either build the server using the [VSCode CMake Tools extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools) or manually.
+
+For Linux the build is automated with Azure Pipelines. (Windows Pipeline does not work because Boost is only availably for MSVC there and MSVC doesn't want to compile this)
 
 ### Manual install ###
 
 ~~~~~~~~~~~~~~~~~~~~~~~
 mkdir build
 cd build
-cmake .. -G "MinGW Makefiles"
-mingw32-make.exe
+
+cmake ..
+cmake --build .
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 ### Install using CMake Tools ###
